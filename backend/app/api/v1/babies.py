@@ -68,3 +68,13 @@ def delete_baby(baby_id):
         return "", 204
     except ValueError:
         return jsonify({"error": "baby_not_found", "message": "Bebê não encontrado."}), 404
+
+@babies_bp.get("/<int:baby_id>/status")
+@jwt_required()
+def get_status(baby_id):
+    user_id = int(get_jwt_identity())
+    try:
+        status = baby_service.get_status(baby_id, user_id)
+        return jsonify(status), 200
+    except ValueError:
+        return jsonify({"error": "baby_not_found", "message": "Bebê não encontrado."}), 404

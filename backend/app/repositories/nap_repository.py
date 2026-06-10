@@ -32,3 +32,11 @@ def save(nap: Nap) -> Nap:
 def delete(nap: Nap) -> None:
     db.session.delete(nap)
     db.session.commit()
+
+def find_last_finished_by_baby(baby_id: int) -> Nap | None:
+    return db.session.execute(
+        db.select(Nap)
+        .where(Nap.baby_id == baby_id, Nap.ended_at.is_not(None))
+        .order_by(Nap.ended_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()

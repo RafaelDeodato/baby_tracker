@@ -32,3 +32,11 @@ def save(feeding: Feeding) -> Feeding:
 def delete(feeding: Feeding) -> None:
     db.session.delete(feeding)
     db.session.commit()
+
+def find_last_finished_by_baby(baby_id: int) -> Feeding | None:
+    return db.session.execute(
+        db.select(Feeding)
+        .where(Feeding.baby_id == baby_id, Feeding.ended_at.is_not(None))
+        .order_by(Feeding.ended_at.desc())
+        .limit(1)
+    ).scalar_one_or_none()
