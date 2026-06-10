@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from db.models.feeding import Feeding
 from app.repositories import feeding_repository, nap_repository, baby_repository
 
-FEEDING_WARNING_MINUTES = 180
+FEEDING_WARNING_MINUTES = 180 # 3 horas
 
 def list_feedings(baby_id: int, user_id: int) -> list[Feeding]:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
