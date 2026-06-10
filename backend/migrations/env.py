@@ -10,6 +10,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from db.base import db
+from db import models
 target_metadata = db.metadata
 
 # this is the Alembic Config object, which provides
