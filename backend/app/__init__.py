@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from core.settings import Config
 from db.base import db
 from app.api.v1 import v1_bp
@@ -9,6 +10,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    CORS(app)
     db.init_app(app)
     jwt = JWTManager(app)
 
