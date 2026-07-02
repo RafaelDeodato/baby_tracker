@@ -1,0 +1,149 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'storage_service.dart';
+
+class ApiService {
+  static const _baseUrl = 'http://localhost:5000/api/v1';
+
+  // ── Helper principal ──────────────────────────────
+  static Future<http.Response> _request(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    bool useRefresh = false,
+    bool isRetry = false,
+  }) async {
+    final token = useRefresh
+        ? await StorageService.getRefreshToken()
+        : await StorageService.getAccessToken();
+
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final uri = Uri.parse('$_baseUrl$path');
+    final encoded = body != null ? jsonEncode(body) : null;
+
+    late http.Response res;
+    switch (method) {
+      case 'GET':    res = await http.get(uri, headers: headers); break;
+      case 'POST':   res = await http.post(uri, headers: headers, body: encoded); break;
+      case 'PUT':    res = await http.put(uri, headers: headers, body: encoded); break;
+      case 'DELETE': res = await http.delete(uri, headers: headers); break;
+      default:       throw Exception('método HTTP inválido');
+    }
+
+    if (res.statusCode == 401 && !useRefresh && !isRetry) {
+      final ok = await _refreshToken();
+      if (ok) return _request(method, path, body: body, isRetry: true);
+      await StorageService.clearTokens();
+      throw Exception('session_expired');
+    }
+
+    return res;
+  }
+
+  static Future<bool> _refreshToken() async {
+    final refreshToken = await StorageService.getRefreshToken();
+    if (refreshToken == null) return false;
+
+    final res = await http.post(
+      Uri.parse('$_baseUrl/auth/refresh'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $refreshToken',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final current = await StorageService.getRefreshToken();
+      await StorageService.saveTokens(data['access_token'], current!);
+      return true;
+    }
+    return false;
+  }
+
+  // ── Auth ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> login(String email, String password) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> register(String name, String email, String password) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/auth/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name, 'email': email, 'password': password}),
+    );
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<void> logout() async {
+    try { await _request('POST', '/auth/logout', useRefresh: true); } catch (_) {}
+    await StorageService.clearTokens();
+  }
+
+  // ── Babies ────────────────────────────────────────
+  static Future<Map<String, dynamic>> getBabies() async {
+    final res = await _request('GET', '/babies/');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> createBaby(String name, String birthDate) async {
+    final res = await _request('POST', '/babies/', body: {'name': name, 'birth_date': birthDate});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> getBabyStatus(int babyId) async {
+    final res = await _request('GET', '/babies/$babyId/status');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  // ── Feedings ──────────────────────────────────────
+  static Future<Map<String, dynamic>> getFeedings(int babyId) async {
+    final res = await _request('GET', '/babies/$babyId/feedings/');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> startFeeding(int babyId) async {
+    final res = await _request('POST', '/babies/$babyId/feedings/start', body: {});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> finishFeeding(int feedingId) async {
+    final res = await _request('POST', '/feedings/$feedingId/finish', body: {});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> deleteFeeding(int feedingId) async {
+    final res = await _request('DELETE', '/feedings/$feedingId');
+    return res.statusCode;
+  }
+
+  // ── Naps ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> getNaps(int babyId) async {
+    final res = await _request('GET', '/babies/$babyId/naps/');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> startNap(int babyId) async {
+    final res = await _request('POST', '/babies/$babyId/naps/start', body: {});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> finishNap(int napId) async {
+    final res = await _request('POST', '/naps/$napId/finish', body: {});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> deleteNap(int napId) async {
+    final res = await _request('DELETE', '/naps/$napId');
+    return res.statusCode;
+  }
+}
