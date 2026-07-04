@@ -45,13 +45,53 @@ class _StatusTabState extends State<StatusTab> {
   Future<void> _runAction(Future<Map<String, dynamic>> Function() action) async {
     setState(() => _actionLoading = true);
     try {
-      await action();
-      await _fetchStatus();
+      final result = await action();
+      final ok = result['status'] == 200 || result['status'] == 201;
+      if (ok) {
+        final warning = result['data'] is Map ? result['data']['warning'] : null;
+        await _fetchStatus();
+        if (warning != null) _showWarningDialog(warning);
+      } else {
+        final message = result['data'] is Map ? result['data']['message'] : null;
+        _showSnack(message ?? 'Não foi possível completar a ação.');
+      }
     } catch (e) {
-      setState(() => _error = 'Erro de conexão.');
+      _showSnack('Erro de conexão.');
     } finally {
       setState(() => _actionLoading = false);
     }
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.dangerS,
+        content: Text(message, style: const TextStyle(color: AppColors.dangerT)),
+      ),
+    );
+  }
+
+  Future<void> _showWarningDialog(String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
+          side: const BorderSide(color: AppColors.warnB, width: AppShapes.borderRegular),
+        ),
+        title: Text('Atenção', style: AppTypography.titleMedium),
+        content: Text(message, style: AppTypography.bodyLarge),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendi', style: TextStyle(color: AppColors.warnT)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDuration(int minutes) {
