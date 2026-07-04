@@ -7,9 +7,10 @@
 
 ## O que é
 
-App para acompanhar a rotina de bebês recém-nascidos (mamadas e sonecas).
-V1 é o MVP: um app mobile para os pais. Ver roadmap completo em
-`docs/baby-tracker-mvp.md`.
+App para acompanhar a rotina de bebês recém-nascidos (mamadas, sonecas e,
+a partir da V2, fraldas). V1 (MVP de rotina) está fechado. Ver
+`docs/baby-tracker-backend-spec.md` para a spec técnica e
+`docs/baby-tracker-roadmap.md` para o roadmap completo de versões.
 
 Duplo objetivo: resolver um problema real do dia a dia de pais de recém-nascidos,
 e servir como projeto de aprendizado prático de backend (Python/Flask) e
@@ -19,11 +20,12 @@ mobile (Flutter) para o autor.
 
 ```text
 /
-├── app/          # Flutter — app mobile dos pais (V1, em desenvolvimento)
+├── app/          # Flutter — app mobile dos pais (V1 fechado, V2 em desenvolvimento)
 ├── backend/       # Flask — API REST, única fonte de dados para todos os clients
 └── docs/
-    ├── baby-tracker-mvp.md          # spec técnica + regras de negócio do backend
-    └── baby-tracker-style-guide.md  # identidade visual, cores, tipografia
+    ├── baby-tracker-backend-spec.md  # spec técnica + regras de negócio do backend
+    ├── baby-tracker-roadmap.md       # roadmap de versões (trilha principal + opcional)
+    └── baby-tracker-style-guide.md   # identidade visual, cores, tipografia
 ```
 
 Monorepo por decisão deliberada nesta fase: só existe 1 client até agora, e
