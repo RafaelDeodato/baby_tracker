@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
+import '../../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +15,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController     = TextEditingController();
   final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -21,6 +24,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final result = await ApiService.register(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      if (result['status'] == 201) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Conta criada com sucesso! Faça login.')),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        setState(() => _error = result['data']['message'] ?? 'Não foi possível criar a conta.');
+      }
+    } catch (e) {
+      setState(() => _error = 'Erro de conexão. Verifique se a API está rodando.');
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
   @override
@@ -67,17 +95,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: true,
                       decoration: const InputDecoration(labelText: 'Senha'),
                     ),
+                    if (_error != null) ...[
+                      const SizedBox(height: AppSpacing.sp4),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.sp3),
+                        decoration: BoxDecoration(
+                          color: AppColors.dangerS,
+                          borderRadius: BorderRadius.circular(AppShapes.radiusSmall),
+                          border: Border.all(color: AppColors.dangerB),
+                        ),
+                        child: Text(_error!, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.dangerT)),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.sp6),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _loading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryS,
                           foregroundColor: AppColors.primaryT,
                           side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
                         ),
-                        child: const Text('Criar conta'),
+                        child: _loading
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Criar conta'),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sp4),
