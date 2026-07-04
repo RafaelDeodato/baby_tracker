@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
 import '../../services/api_service.dart';
+import '../../widgets/app_top_bar.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -56,11 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Perfil', style: Theme.of(context).textTheme.titleMedium),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: const AppTopBar(title: 'Perfil', showProfileAction: false),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

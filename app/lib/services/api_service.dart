@@ -112,6 +112,16 @@ class ApiService {
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 
+  static Future<Map<String, dynamic>> updateBaby(int babyId, String name, String birthDate) async {
+    final res = await _request('PUT', '/babies/$babyId', body: {'name': name, 'birth_date': birthDate});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> deleteBaby(int babyId) async {
+    final res = await _request('DELETE', '/babies/$babyId');
+    return res.statusCode;
+  }
+
   // ── Feedings ──────────────────────────────────────
   static Future<Map<String, dynamic>> getFeedings(int babyId) async {
     final res = await _request('GET', '/babies/$babyId/feedings/');

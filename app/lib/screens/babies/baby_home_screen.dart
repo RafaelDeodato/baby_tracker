@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/app_top_bar.dart';
 import 'status_tab.dart';
 import 'history_tab.dart';
+import 'baby_profile_tab.dart';
 
 class BabyHomeScreen extends StatefulWidget {
   final Map<String, dynamic> baby;
@@ -14,20 +16,21 @@ class BabyHomeScreen extends StatefulWidget {
 
 class _BabyHomeScreenState extends State<BabyHomeScreen> {
   int _currentIndex = 0;
+  late Map<String, dynamic> _baby = widget.baby;
 
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      StatusTab(babyId: widget.baby['id']),
-      HistoryTab(babyId: widget.baby['id']),
+      StatusTab(babyId: _baby['id']),
+      HistoryTab(babyId: _baby['id']),
+      BabyProfileTab(
+        baby: _baby,
+        onUpdated: (updated) => setState(() => _baby = updated),
+      ),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.baby['name'], style: Theme.of(context).textTheme.titleMedium),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppTopBar(title: _baby['name']),
       body: tabs[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -38,6 +41,7 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.info_outline), label: 'Status'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Histórico'),
+          BottomNavigationBarItem(icon: Icon(Icons.child_care), label: 'Perfil'),
         ],
       ),
     );
