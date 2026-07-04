@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'storage_service.dart';
+import 'navigation_service.dart';
 
 class ApiService {
   static const _baseUrl = 'http://192.168.10.103:5000/api/v1';
@@ -38,6 +39,7 @@ class ApiService {
       final ok = await _refreshToken();
       if (ok) return _request(method, path, body: body, isRetry: true);
       await StorageService.clearTokens();
+      NavigationService.goToLogin();
       throw Exception('session_expired');
     }
 
@@ -89,13 +91,13 @@ class ApiService {
     await StorageService.clearTokens();
   }
 
-  // ── Babies ────────────────────────────────────────
-  static Future<Map<String, dynamic>> getBabies() async {
   static Future<Map<String, dynamic>> getMe() async {
     final res = await _request('GET', '/auth/me');
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 
+  // ── Babies ────────────────────────────────────────
+  static Future<Map<String, dynamic>> getBabies() async {
     final res = await _request('GET', '/babies/');
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }

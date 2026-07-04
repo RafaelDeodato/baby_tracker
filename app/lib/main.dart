@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/splash_screen.dart';
+import 'services/navigation_service.dart';
 
 void main() {
   runApp(const BabyTrackerApp());
@@ -14,8 +15,9 @@ class BabyTrackerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Baby Tracker',
       debugShowCheckedModeBanner: false,
+      navigatorKey: NavigationService.navigatorKey,
       theme: AppTheme.theme,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
