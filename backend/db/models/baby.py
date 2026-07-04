@@ -11,5 +11,5 @@ class Baby(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", back_populates="babies")
-    feedings = db.relationship("Feeding", back_populates="baby")
-    naps = db.relationship("Nap", back_populates="baby")
+    feedings = db.relationship("Feeding", back_populates="baby", cascade="all, delete-orphan")
+    naps = db.relationship("Nap", back_populates="baby", cascade="all, delete-orphan")
