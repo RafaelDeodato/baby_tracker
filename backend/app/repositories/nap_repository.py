@@ -1,6 +1,25 @@
+from datetime import datetime
+from sqlalchemy import or_
 from db.base import db
 from db.models.nap import Nap
 from db.models.baby import Baby
+
+def find_overlapping(
+    baby_id: int,
+    started_at: datetime,
+    ended_at: datetime | None,
+    exclude_id: int | None = None
+) -> Nap | None:
+    conditions = [
+        Nap.baby_id == baby_id,
+        or_(Nap.ended_at.is_(None), Nap.ended_at > started_at),
+    ]
+    if ended_at is not None:
+        conditions.append(Nap.started_at < ended_at)
+    if exclude_id is not None:
+        conditions.append(Nap.id != exclude_id)
+
+    return db.session.execute(db.select(Nap).where(*conditions)).scalars().first()
 
 def find_open_by_baby(baby_id: int) -> Nap | None:
     return db.session.execute(

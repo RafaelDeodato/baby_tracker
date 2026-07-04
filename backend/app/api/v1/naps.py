@@ -64,6 +64,25 @@ def finish_nap(nap_id):
         if error == "invalid_end_time":
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
 
+@naps_bp.put("/naps/<int:nap_id>")
+@jwt_required()
+def update_nap(nap_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
+    ended_at = datetime.fromisoformat(data["ended_at"]) if "ended_at" in data else None
+    try:
+        nap = nap_service.update_nap(nap_id, user_id, started_at, ended_at)
+        return jsonify(_serialize(nap)), 200
+    except ValueError as e:
+        error = str(e)
+        if error == "nap_not_found":
+            return jsonify({"error": error, "message": "Soneca não encontrada."}), 404
+        if error == "invalid_end_time":
+            return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
+        if error == "overlaps_existing_event":
+            return jsonify({"error": error, "message": "O novo horário conflita com outro evento já registrado."}), 409
+
 @naps_bp.delete("/naps/<int:nap_id>")
 @jwt_required()
 def delete_nap(nap_id):

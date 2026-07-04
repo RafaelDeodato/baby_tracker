@@ -49,6 +49,31 @@ def finish_feeding(feeding_id: int, user_id: int, ended_at: datetime | None = No
 
     return {"feeding": feeding, "warning": warning}
 
+def update_feeding(
+    feeding_id: int,
+    user_id: int,
+    started_at: datetime | None = None,
+    ended_at: datetime | None = None
+) -> Feeding:
+    feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
+    if not feeding:
+        raise ValueError("feeding_not_found")
+
+    new_started_at = started_at if started_at is not None else feeding.started_at
+    new_ended_at = ended_at if ended_at is not None else feeding.ended_at
+
+    if new_ended_at is not None and new_ended_at <= new_started_at:
+        raise ValueError("invalid_end_time")
+
+    if feeding_repository.find_overlapping(feeding.baby_id, new_started_at, new_ended_at, exclude_id=feeding.id):
+        raise ValueError("overlaps_existing_event")
+    if nap_repository.find_overlapping(feeding.baby_id, new_started_at, new_ended_at):
+        raise ValueError("overlaps_existing_event")
+
+    feeding.started_at = new_started_at
+    feeding.ended_at = new_ended_at
+    return feeding_repository.save(feeding)
+
 def delete_feeding(feeding_id: int, user_id: int) -> None:
     feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
     if not feeding:

@@ -49,6 +49,31 @@ def finish_nap(nap_id: int, user_id: int, ended_at: datetime | None = None) -> d
 
     return {"nap": nap, "warning": warning}
 
+def update_nap(
+    nap_id: int,
+    user_id: int,
+    started_at: datetime | None = None,
+    ended_at: datetime | None = None
+) -> Nap:
+    nap = nap_repository.find_by_id_and_user(nap_id, user_id)
+    if not nap:
+        raise ValueError("nap_not_found")
+
+    new_started_at = started_at if started_at is not None else nap.started_at
+    new_ended_at = ended_at if ended_at is not None else nap.ended_at
+
+    if new_ended_at is not None and new_ended_at <= new_started_at:
+        raise ValueError("invalid_end_time")
+
+    if nap_repository.find_overlapping(nap.baby_id, new_started_at, new_ended_at, exclude_id=nap.id):
+        raise ValueError("overlaps_existing_event")
+    if feeding_repository.find_overlapping(nap.baby_id, new_started_at, new_ended_at):
+        raise ValueError("overlaps_existing_event")
+
+    nap.started_at = new_started_at
+    nap.ended_at = new_ended_at
+    return nap_repository.save(nap)
+
 def delete_nap(nap_id: int, user_id: int) -> None:
     nap = nap_repository.find_by_id_and_user(nap_id, user_id)
     if not nap:

@@ -64,6 +64,25 @@ def finish_feeding(feeding_id):
         if error == "invalid_end_time":
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
 
+@feedings_bp.put("/feedings/<int:feeding_id>")
+@jwt_required()
+def update_feeding(feeding_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
+    ended_at = datetime.fromisoformat(data["ended_at"]) if "ended_at" in data else None
+    try:
+        feeding = feeding_service.update_feeding(feeding_id, user_id, started_at, ended_at)
+        return jsonify(_serialize(feeding)), 200
+    except ValueError as e:
+        error = str(e)
+        if error == "feeding_not_found":
+            return jsonify({"error": error, "message": "Mamada não encontrada."}), 404
+        if error == "invalid_end_time":
+            return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
+        if error == "overlaps_existing_event":
+            return jsonify({"error": error, "message": "O novo horário conflita com outro evento já registrado."}), 409
+
 @feedings_bp.delete("/feedings/<int:feeding_id>")
 @jwt_required()
 def delete_feeding(feeding_id):
