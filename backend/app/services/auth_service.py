@@ -32,6 +32,12 @@ def login(email: str, password: str) -> dict:
 
     return {"access_token": access_token, "refresh_token": refresh_token}
 
+def get_current_user(user_id: int) -> User:
+    user = user_repository.find_by_id(user_id)
+    if not user:
+        raise ValueError("user_not_found")
+    return user
+
 def refresh(identity: str) -> dict:
     access_token = create_access_token(identity=identity)
     return {"access_token": access_token}

@@ -30,6 +30,13 @@ def login():
     except ValueError:
         return jsonify({"error": "invalid_credentials", "message": "E-mail ou senha inválidos."}), 401
 
+@auth_bp.get("/me")
+@jwt_required()
+def me():
+    user_id = int(get_jwt_identity())
+    user = auth_service.get_current_user(user_id)
+    return jsonify({"id": user.id, "name": user.name, "email": user.email}), 200
+
 @auth_bp.post("/refresh")
 @jwt_required(refresh=True)
 def refresh():
