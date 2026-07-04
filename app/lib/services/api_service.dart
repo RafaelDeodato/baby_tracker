@@ -91,6 +91,11 @@ class ApiService {
 
   // ── Babies ────────────────────────────────────────
   static Future<Map<String, dynamic>> getBabies() async {
+  static Future<Map<String, dynamic>> getMe() async {
+    final res = await _request('GET', '/auth/me');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
     final res = await _request('GET', '/babies/');
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }

@@ -4,6 +4,8 @@ import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
 import '../../services/api_service.dart';
 import '../../services/storage_service.dart';
+import '../profile/profile_screen.dart';
+import 'baby_home_screen.dart';
 
 class BabiesScreen extends StatefulWidget {
   const BabiesScreen({super.key});
@@ -164,6 +166,15 @@ class _BabiesScreenState extends State<BabiesScreen> {
         title: Text('Meus Bebês', style: Theme.of(context).textTheme.titleMedium),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            ),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -189,25 +200,31 @@ class _BabiesScreenState extends State<BabiesScreen> {
                       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sp3),
                       itemBuilder: (context, i) {
                         final baby = _babies[i];
-                        return Container(
-                          padding: const EdgeInsets.all(AppSpacing.sp4),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
-                            border: Border.all(color: AppColors.outline, width: AppShapes.borderRegular),
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => BabyHomeScreen(baby: baby)),
                           ),
-                          child: Row(
-                            children: [
-                              const Text('👶', style: TextStyle(fontSize: 32)),
-                              const SizedBox(width: AppSpacing.sp3),
-                              Expanded(
-                                child: Text(
-                                  baby['name'],
-                                  style: Theme.of(context).textTheme.titleMedium,
+                          child: Container(
+                            padding: const EdgeInsets.all(AppSpacing.sp4),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
+                              border: Border.all(color: AppColors.outline, width: AppShapes.borderRegular),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('👶', style: TextStyle(fontSize: 32)),
+                                const SizedBox(width: AppSpacing.sp3),
+                                Expanded(
+                                  child: Text(
+                                    baby['name'],
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
                                 ),
-                              ),
-                              const Icon(Icons.chevron_right),
-                            ],
+                                const Icon(Icons.chevron_right),
+                              ],
+                            ),
                           ),
                         );
                       },
