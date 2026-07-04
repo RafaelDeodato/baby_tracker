@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,3 +10,13 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+
+    # Explícitos em vez de depender do default da lib (15min / 30 dias) —
+    # deixa a política de sessão visível no código e ajustável via .env
+    # (útil, por exemplo, pra forçar expiração rápida em teste manual).
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(
+        seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_SECONDS", 900))
+    )
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(
+        seconds=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_SECONDS", 60 * 60 * 24 * 30))
+    )
