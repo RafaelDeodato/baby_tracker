@@ -222,9 +222,9 @@ class _StatusTabState extends State<StatusTab> {
               icon: const Text('😴'),
               label: const Text('Iniciar soneca'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryS,
-                foregroundColor: AppColors.primaryT,
-                side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
+                backgroundColor: AppColors.napS,
+                foregroundColor: AppColors.napT,
+                side: const BorderSide(color: AppColors.napB, width: AppShapes.borderRegular),
                 minimumSize: const Size.fromHeight(52),
               ),
             ),

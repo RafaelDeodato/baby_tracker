@@ -143,6 +143,7 @@ Regras:
 * Raio: `radiusMedium` (16) ou `radiusFull` para os botões-herói de iniciar/parar evento.
 * Texto: `labelLarge` (Nunito Bold 16).
 * Estado pressionado: escurecer o surface ~8% (sem ripple cinza do Material).
+* **Exceção — botões de iniciar evento lado a lado:** quando a tela oferece ações de iniciar mais de um tipo de evento ao mesmo tempo (ex: "Iniciar mamada" e "Iniciar soneca" na tela de status), cada botão usa a cor semântica do próprio evento (amarelo para mamada, lilás para soneca — ver Cores Semânticas de Eventos) em vez do Primário genérico. Objetivo: diferenciar visualmente as duas ações à primeira vista, já que o texto sozinho compete por atenção num app usado de madrugada. Quando existe só uma ação de iniciar na tela, usar Primário normalmente.
 
 ## Inputs / Formulários
 
