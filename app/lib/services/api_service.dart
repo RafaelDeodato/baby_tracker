@@ -143,6 +143,15 @@ class ApiService {
     return res.statusCode;
   }
 
+  static Future<Map<String, dynamic>> updateFeeding(int feedingId, {String? startedAt, String? endedAt}) async {
+    final body = <String, dynamic>{
+      'started_at': ?startedAt,
+      'ended_at': ?endedAt,
+    };
+    final res = await _request('PUT', '/feedings/$feedingId', body: body);
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
   // ── Naps ──────────────────────────────────────────
   static Future<Map<String, dynamic>> getNaps(int babyId) async {
     final res = await _request('GET', '/babies/$babyId/naps/');
@@ -156,6 +165,15 @@ class ApiService {
 
   static Future<Map<String, dynamic>> finishNap(int napId) async {
     final res = await _request('POST', '/naps/$napId/finish', body: {});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> updateNap(int napId, {String? startedAt, String? endedAt}) async {
+    final body = <String, dynamic>{
+      'started_at': ?startedAt,
+      'ended_at': ?endedAt,
+    };
+    final res = await _request('PUT', '/naps/$napId', body: body);
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 

@@ -94,6 +94,32 @@ class _StatusTabState extends State<StatusTab> {
     );
   }
 
+  Future<void> _adjustStartTime({
+    required String startedAt,
+    required Future<Map<String, dynamic>> Function(String iso) onSave,
+  }) async {
+    final current = DateTime.parse(startedAt).toLocal();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(current),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primaryB,
+            onPrimary: AppColors.ink,
+            onSurface: AppColors.ink,
+            surface: AppColors.surface,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+
+    final adjusted = DateTime(current.year, current.month, current.day, picked.hour, picked.minute);
+    await _runAction(() => onSave(adjusted.toUtc().toIso8601String()));
+  }
+
   String _formatDuration(int minutes) {
     final hours = minutes ~/ 60;
     final rem = minutes % 60;
@@ -162,6 +188,10 @@ class _StatusTabState extends State<StatusTab> {
         startedAt: currentFeeding['started_at'],
         actionLabel: 'Finalizar mamada',
         onAction: () => _runAction(() => ApiService.finishFeeding(currentFeeding['id'])),
+        onAdjustStartTime: () => _adjustStartTime(
+          startedAt: currentFeeding['started_at'],
+          onSave: (iso) => ApiService.updateFeeding(currentFeeding['id'], startedAt: iso),
+        ),
       );
     }
 
@@ -175,6 +205,10 @@ class _StatusTabState extends State<StatusTab> {
         startedAt: currentNap['started_at'],
         actionLabel: 'Finalizar soneca',
         onAction: () => _runAction(() => ApiService.finishNap(currentNap['id'])),
+        onAdjustStartTime: () => _adjustStartTime(
+          startedAt: currentNap['started_at'],
+          onSave: (iso) => ApiService.updateNap(currentNap['id'], startedAt: iso),
+        ),
       );
     }
 
@@ -243,6 +277,7 @@ class _StatusTabState extends State<StatusTab> {
     required String startedAt,
     required String actionLabel,
     required VoidCallback onAction,
+    required VoidCallback onAdjustStartTime,
   }) {
     return Container(
       width: double.infinity,
@@ -264,7 +299,25 @@ class _StatusTabState extends State<StatusTab> {
           const SizedBox(height: AppSpacing.sp2),
           Text('há ${_formatDuration(elapsedMinutes)}', style: AppTypography.displayLarge),
           const SizedBox(height: AppSpacing.sp2),
-          Text('desde ${_formatClock(startedAt)}', style: AppTypography.bodyMedium),
+          GestureDetector(
+            onTap: _actionLoading ? null : onAdjustStartTime,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(AppShapes.radiusFull),
+                border: Border.all(color: AppColors.outline, width: AppShapes.borderRegular),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.edit_outlined, size: 16, color: AppColors.ink),
+                  const SizedBox(width: 6),
+                  Text('desde ${_formatClock(startedAt)}', style: AppTypography.bodyMedium.copyWith(color: AppColors.ink)),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpacing.sp6),
           SizedBox(
             width: double.infinity,

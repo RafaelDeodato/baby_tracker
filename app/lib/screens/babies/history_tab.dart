@@ -4,6 +4,7 @@ import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../services/api_service.dart';
+import 'event_edit_dialog.dart';
 
 class HistoryTab extends StatefulWidget {
   final int babyId;
@@ -63,7 +64,7 @@ class _HistoryTabState extends State<HistoryTab> {
           borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
           side: const BorderSide(color: AppColors.outline, width: AppShapes.borderRegular),
         ),
-        title: Text('Excluir registro?', style: Theme.of(context).textTheme.titleMedium),
+        title: Text('Excluir registro?', style: Theme.of(ctx).textTheme.titleMedium),
         content: Text(
           isFeeding ? 'Esta mamada será excluída permanentemente.' : 'Esta soneca será excluída permanentemente.',
           style: AppTypography.bodyMedium,
@@ -90,6 +91,39 @@ class _HistoryTabState extends State<HistoryTab> {
     if (status == 204) {
       setState(() => _events.removeWhere((e) => e['id'] == event['id'] && e['type'] == event['type']));
     }
+  }
+
+  Future<void> _editEvent(Map<String, dynamic> event) async {
+    final isFeeding = event['type'] == 'feeding';
+    final startedAt = DateTime.parse(event['started_at']).toLocal();
+    final endedAt = event['ended_at'] != null ? DateTime.parse(event['ended_at']).toLocal() : null;
+
+    await showEventEditDialog(
+      context,
+      title: isFeeding ? 'Editar mamada' : 'Editar soneca',
+      initialStartedAt: startedAt,
+      initialEndedAt: endedAt,
+      onSubmit: (newStartedAt, newEndedAt) async {
+        final result = isFeeding
+            ? await ApiService.updateFeeding(
+                event['id'],
+                startedAt: newStartedAt.toUtc().toIso8601String(),
+                endedAt: newEndedAt?.toUtc().toIso8601String(),
+              )
+            : await ApiService.updateNap(
+                event['id'],
+                startedAt: newStartedAt.toUtc().toIso8601String(),
+                endedAt: newEndedAt?.toUtc().toIso8601String(),
+              );
+        if (result['status'] == 200) {
+          await _fetchHistory();
+          return null;
+        }
+        return result['data'] is Map
+            ? result['data']['message'] ?? 'Não foi possível salvar.'
+            : 'Não foi possível salvar.';
+      },
+    );
   }
 
   String _formatDuration(int minutes) {
@@ -168,6 +202,10 @@ class _HistoryTabState extends State<HistoryTab> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.inkSoft),
+                  onPressed: () => _editEvent(event),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: AppColors.dangerT),
