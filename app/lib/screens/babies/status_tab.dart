@@ -144,7 +144,7 @@ class _StatusTabState extends State<StatusTab> {
               familyBorder: AppColors.napB,
               familySurface: AppColors.napS,
               duration: lastNap['duration_minutes'],
-              minutesSince: null,
+              minutesSince: currentNap == null ? awakeMinutes : null,
             ),
         ],
       ),
