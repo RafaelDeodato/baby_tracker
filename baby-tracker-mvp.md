@@ -127,6 +127,14 @@ Estas regras concentram o comportamento dos eventos com estado aberto/fechado e 
 * Finalizar um evento inexistente retorna `404`.
 * Eventos com duração improvável (ex: mamada > 3h, soneca > 16h) são aceitos, mas a API retorna um campo `warning` na resposta — provavelmente o usuário esqueceu de finalizar. Não bloquear, apenas sinalizar.
 
+## Edição de eventos já registrados
+
+> Regra adicionada durante o desenvolvimento (não estava no desenho original) — ver contexto na seção "Feedings/Naps" da API.
+
+* `PUT /feedings/{id}` e `PUT /naps/{id}` reaplicam a mesma validação de `ended_at > started_at` do finish (`422` se violada).
+* O novo horário não pode **sobrepor nenhum outro evento do mesmo bebê**, nas 4 combinações possíveis: mamada-mamada, mamada-soneca, soneca-soneca, soneca-mamada. Violação retorna `409 Conflict`. Evento em andamento (sem `ended_at`) é tratado como um intervalo aberto no futuro para efeito dessa checagem.
+* **Não valida** sobreposição no momento de *iniciar* um evento novo além da checagem de "já existe algo em andamento" que já existia — só na edição, que é o único fluxo onde um horário arbitrário no passado pode ser introduzido.
+
 ## Duração
 
 * A duração **não é persistida** no banco. É um dado derivado, calculado no service (ou como property no model) a partir de `started_at` e `ended_at`.
@@ -361,7 +369,7 @@ created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 
 ```sql
 id              SERIAL PRIMARY KEY
-baby_id         INTEGER NOT NULL REFERENCES babies(id)
+baby_id         INTEGER NOT NULL REFERENCES babies(id) ON DELETE CASCADE
 started_at      TIMESTAMPTZ NOT NULL
 ended_at        TIMESTAMPTZ NULL          -- NULL = mamada em andamento
 created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -373,13 +381,15 @@ created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 
 ```sql
 id              SERIAL PRIMARY KEY
-baby_id         INTEGER NOT NULL REFERENCES babies(id)
+baby_id         INTEGER NOT NULL REFERENCES babies(id) ON DELETE CASCADE
 started_at      TIMESTAMPTZ NOT NULL
 ended_at        TIMESTAMPTZ NULL          -- NULL = soneca em andamento
 created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 > `duration` é calculada (`ended_at - started_at`), não persistida.
+
+> **`ON DELETE CASCADE` adicionado durante o desenvolvimento** — a versão inicial da FK não tinha, e excluir um bebê com mamadas/sonecas já registradas quebrava com erro de integridade referencial. Faz sentido o histórico ser removido junto: não existe caso de uso pra manter mamadas/sonecas "órfãs" de um bebê que não existe mais.
 
 ### Índices recomendados
 
@@ -399,9 +409,16 @@ Prefixo base: `/api/v1`
 ```text
 POST   /auth/register
 POST   /auth/login          → retorna access_token + refresh_token
+GET    /auth/me             → dados do usuário autenticado (nome, e-mail)
 POST   /auth/refresh        → renova access_token usando refresh_token
 POST   /auth/logout         → revoga refresh_token (blocklist)
 ```
+
+> `GET /auth/me` não estava no desenho original — faltava qualquer forma
+> de buscar nome/e-mail do usuário depois do login (que só devolve
+> tokens). Percebido ao implementar a tela de perfil do app; sem ele não
+> dava pra montar nem a tela de perfil nem checar sessão salva no
+> `SplashScreen` sem reinventar essa checagem em outro endpoint.
 
 ## Babies
 
@@ -417,27 +434,31 @@ GET    /babies/{id}/status      → status consolidado (Funcionalidade 3)
 ## Feedings (escopados por bebê)
 
 ```text
-GET    /babies/{baby_id}/feedings           → histórico paginado
+GET    /babies/{baby_id}/feedings           → histórico completo (sem paginação por enquanto)
 POST   /babies/{baby_id}/feedings/start
 POST   /feedings/{id}/finish
+PUT    /feedings/{id}                       → corrige started_at/ended_at de um registro existente
 DELETE /feedings/{id}
 ```
 
 ## Naps (escopados por bebê)
 
 ```text
-GET    /babies/{baby_id}/naps               → histórico paginado
+GET    /babies/{baby_id}/naps               → histórico completo (sem paginação por enquanto)
 POST   /babies/{baby_id}/naps/start
 POST   /naps/{id}/finish
+PUT    /naps/{id}                           → corrige started_at/ended_at de um registro existente
 DELETE /naps/{id}
 ```
 
 ### Observações
 
 * Listagens de eventos são **escopadas por bebê** (e não globais como `GET /feedings`), pois o usuário pode ter múltiplos bebês. Isso também simplifica a autorização.
-* Ações sobre um evento específico (`finish`, `delete`) usam o id do evento diretamente — a propriedade é validada via join até o `user_id`.
+* Ações sobre um evento específico (`finish`, `delete`, `update`) usam o id do evento diretamente — a propriedade é validada via join até o `user_id`.
 * `start` aceita opcionalmente um `started_at` no body (registro retroativo); se omitido, usa o horário atual do servidor (UTC).
 * `finish` aceita opcionalmente um `ended_at` no body; se omitido, usa o horário atual.
+* A listagem foi desenhada para paginação (ver seção original), mas isso não foi implementado no V1 — o volume de dados de um bebê não justificou ainda. Reavaliar se o histórico crescer a ponto de pesar.
+* `PUT /feedings/{id}` e `PUT /naps/{id}` **não estavam no desenho original**. Faltava qualquer forma de corrigir um evento depois de criado — só dava pra excluir e perder o registro. Percebido durante o desenvolvimento em dois cenários reais: (1) o pai só consegue registrar o início da mamada/soneca um tempo depois de ela começar de fato (retroativo), e (2) o evento fica aberto por muito mais tempo do que durou porque o usuário esqueceu de finalizar (correção pós-fato). Os dois casos usam o mesmo endpoint — a única diferença é qual campo fica editável (só `started_at` se o evento ainda está em andamento; os dois se já foi finalizado). Ver regra de sobreposição abaixo.
 
 ### Exemplo de resposta — `GET /babies/{id}/status`
 
@@ -485,6 +506,32 @@ DELETE /naps/{id}
 
 Objetivo:
 Validar se pais utilizariam a aplicação diariamente.
+
+### Pontos adicionados durante o desenvolvimento (antes de fechar o V1)
+
+Nenhum destes estava no desenho original — apareceram usando o app de verdade
+e foram avaliados como necessários antes de considerar o V1 pronto, não como
+features de uma versão futura:
+
+* **`GET /auth/me`** — faltava qualquer forma de buscar dados do usuário
+  logado (login só devolve tokens). Necessário pra tela de perfil e pra
+  checar sessão salva na abertura do app.
+* **Editar e excluir bebê** (`PUT`/`DELETE /babies/{id}` já estavam
+  desenhados desde o início, mas nunca foram implementados no app) — sem
+  isso, um erro de digitação no nome ou uma data de nascimento errada
+  ficava permanente.
+* **`ON DELETE CASCADE`** em `feedings`/`naps` — excluir um bebê com
+  histórico quebrava com erro de integridade referencial.
+* **`PUT /feedings/{id}` e `PUT /naps/{id}`** — sem eles, não havia como
+  corrigir um evento depois de criado. Cobre registro retroativo (o pai
+  só registra a mamada um tempo depois que ela começou) e correção
+  pós-fato (esqueceu de finalizar e o evento ficou aberto por horas).
+  Validam sobreposição com outros eventos do bebê nas 4 combinações
+  possíveis (ver Regras de Negócio).
+* **Sessão persistente** — o app pedia login toda vez que era reaberto,
+  mesmo com um refresh token válido guardado. Resolvido com uma splash
+  screen que valida a sessão salva via `GET /auth/me` antes de decidir
+  para onde navegar.
 
 ## V2
 
