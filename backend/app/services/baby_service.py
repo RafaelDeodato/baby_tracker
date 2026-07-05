@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, date
 from db.models.baby import Baby
-from app.repositories import baby_repository, feeding_repository, nap_repository
+from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository
 
 
 def list_babies(user_id: int) -> list[Baby]:
@@ -37,6 +37,7 @@ def get_status(baby_id: int, user_id: int) -> dict:
     current_nap = nap_repository.find_open_by_baby(baby_id)
     last_feeding = feeding_repository.find_last_finished_by_baby(baby_id)
     last_nap = nap_repository.find_last_finished_by_baby(baby_id)
+    last_diaper = diaper_repository.find_last_by_baby(baby_id)
 
     return {
         "baby_id": baby_id,
@@ -63,5 +64,10 @@ def get_status(baby_id: int, user_id: int) -> dict:
             "ended_at": last_nap.ended_at.isoformat(),
             "duration_minutes": last_nap.duration_minutes,
         } if last_nap else None,
-        "awake_minutes": round((now - last_nap.ended_at).total_seconds() / 60) if last_nap and not current_nap else None
+        "awake_minutes": round((now - last_nap.ended_at).total_seconds() / 60) if last_nap and not current_nap else None,
+        "last_diaper": {
+            "id": last_diaper.id,
+            "changed_at": last_diaper.changed_at.isoformat(),
+            "minutes_since": round((now - last_diaper.changed_at).total_seconds() / 60)
+        } if last_diaper else None
     }

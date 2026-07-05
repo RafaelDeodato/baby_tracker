@@ -4,7 +4,7 @@ import 'storage_service.dart';
 import 'navigation_service.dart';
 
 class ApiService {
-  static const _baseUrl = 'http://192.168.10.103:5000/api/v1';
+  static const _baseUrl = 'http://192.168.0.238:5000/api/v1';
 
   // ── Helper principal ──────────────────────────────
   static Future<http.Response> _request(
@@ -179,6 +179,28 @@ class ApiService {
 
   static Future<int> deleteNap(int napId) async {
     final res = await _request('DELETE', '/naps/$napId');
+    return res.statusCode;
+  }
+
+  // ── Diapers ───────────────────────────────────────
+  static Future<Map<String, dynamic>> getDiapers(int babyId) async {
+    final res = await _request('GET', '/babies/$babyId/diapers/');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> registerDiaper(int babyId, {String? changedAt}) async {
+    final body = <String, dynamic>{'changed_at': ?changedAt};
+    final res = await _request('POST', '/babies/$babyId/diapers/', body: body);
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> updateDiaper(int diaperId, String changedAt) async {
+    final res = await _request('PUT', '/diapers/$diaperId', body: {'changed_at': changedAt});
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> deleteDiaper(int diaperId) async {
+    final res = await _request('DELETE', '/diapers/$diaperId');
     return res.statusCode;
   }
 }

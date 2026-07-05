@@ -32,14 +32,17 @@ class _HistoryTabState extends State<HistoryTab> {
       final results = await Future.wait([
         ApiService.getFeedings(widget.babyId),
         ApiService.getNaps(widget.babyId),
+        ApiService.getDiapers(widget.babyId),
       ]);
       final feedingsResult = results[0];
       final napsResult = results[1];
+      final diapersResult = results[2];
 
-      if (feedingsResult['status'] == 200 && napsResult['status'] == 200) {
+      if (feedingsResult['status'] == 200 && napsResult['status'] == 200 && diapersResult['status'] == 200) {
         final events = <Map<String, dynamic>>[
           for (final f in feedingsResult['data']) {...f, 'type': 'feeding'},
           for (final n in napsResult['data']) {...n, 'type': 'nap'},
+          for (final d in diapersResult['data']) {...d, 'type': 'diaper', 'started_at': d['changed_at']},
         ];
         events.sort((a, b) =>
             DateTime.parse(b['started_at']).compareTo(DateTime.parse(a['started_at'])));
@@ -55,7 +58,8 @@ class _HistoryTabState extends State<HistoryTab> {
   }
 
   Future<void> _confirmDelete(Map<String, dynamic> event) async {
-    final isFeeding = event['type'] == 'feeding';
+    final type = event['type'];
+    final label = type == 'feeding' ? 'mamada' : type == 'nap' ? 'soneca' : 'troca de fralda';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -66,7 +70,7 @@ class _HistoryTabState extends State<HistoryTab> {
         ),
         title: Text('Excluir registro?', style: Theme.of(ctx).textTheme.titleMedium),
         content: Text(
-          isFeeding ? 'Esta mamada será excluída permanentemente.' : 'Esta soneca será excluída permanentemente.',
+          'Este registro de $label será excluído permanentemente.',
           style: AppTypography.bodyMedium,
         ),
         actions: [
@@ -84,9 +88,11 @@ class _HistoryTabState extends State<HistoryTab> {
 
     if (confirmed != true) return;
 
-    final status = isFeeding
-        ? await ApiService.deleteFeeding(event['id'])
-        : await ApiService.deleteNap(event['id']);
+    final status = switch (type) {
+      'feeding' => await ApiService.deleteFeeding(event['id']),
+      'nap' => await ApiService.deleteNap(event['id']),
+      _ => await ApiService.deleteDiaper(event['id']),
+    };
 
     if (status == 204) {
       setState(() => _events.removeWhere((e) => e['id'] == event['id'] && e['type'] == event['type']));
@@ -94,27 +100,30 @@ class _HistoryTabState extends State<HistoryTab> {
   }
 
   Future<void> _editEvent(Map<String, dynamic> event) async {
-    final isFeeding = event['type'] == 'feeding';
+    final type = event['type'];
     final startedAt = DateTime.parse(event['started_at']).toLocal();
     final endedAt = event['ended_at'] != null ? DateTime.parse(event['ended_at']).toLocal() : null;
 
     await showEventEditDialog(
       context,
-      title: isFeeding ? 'Editar mamada' : 'Editar soneca',
+      title: switch (type) { 'feeding' => 'Editar mamada', 'nap' => 'Editar soneca', _ => 'Editar fralda' },
+      startLabel: type == 'diaper' ? 'Horário' : 'Início',
       initialStartedAt: startedAt,
-      initialEndedAt: endedAt,
+      initialEndedAt: type == 'diaper' ? null : endedAt,
       onSubmit: (newStartedAt, newEndedAt) async {
-        final result = isFeeding
-            ? await ApiService.updateFeeding(
-                event['id'],
-                startedAt: newStartedAt.toUtc().toIso8601String(),
-                endedAt: newEndedAt?.toUtc().toIso8601String(),
-              )
-            : await ApiService.updateNap(
-                event['id'],
-                startedAt: newStartedAt.toUtc().toIso8601String(),
-                endedAt: newEndedAt?.toUtc().toIso8601String(),
-              );
+        final result = switch (type) {
+          'feeding' => await ApiService.updateFeeding(
+              event['id'],
+              startedAt: newStartedAt.toUtc().toIso8601String(),
+              endedAt: newEndedAt?.toUtc().toIso8601String(),
+            ),
+          'nap' => await ApiService.updateNap(
+              event['id'],
+              startedAt: newStartedAt.toUtc().toIso8601String(),
+              endedAt: newEndedAt?.toUtc().toIso8601String(),
+            ),
+          _ => await ApiService.updateDiaper(event['id'], newStartedAt.toUtc().toIso8601String()),
+        };
         if (result['status'] == 200) {
           await _fetchHistory();
           return null;
@@ -149,7 +158,7 @@ class _HistoryTabState extends State<HistoryTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🍼😴', style: TextStyle(fontSize: 48)),
+            const Text('🍼😴🧷', style: TextStyle(fontSize: 48)),
             const SizedBox(height: AppSpacing.sp3),
             Text('Nenhum registro ainda.', style: AppTypography.bodyLarge),
           ],
@@ -165,11 +174,12 @@ class _HistoryTabState extends State<HistoryTab> {
         separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sp3),
         itemBuilder: (context, i) {
           final event = _events[i];
-          final isFeeding = event['type'] == 'feeding';
-          final inProgress = event['ended_at'] == null;
-          final familyBorder = isFeeding ? AppColors.primaryB : AppColors.napB;
-          final familySurface = isFeeding ? AppColors.primaryS : AppColors.napS;
-          final emoji = isFeeding ? '🍼' : '😴';
+          final type = event['type'];
+          final isDiaper = type == 'diaper';
+          final inProgress = !isDiaper && event['ended_at'] == null;
+          final familyBorder = switch (type) { 'feeding' => AppColors.feedB, 'nap' => AppColors.napB, _ => AppColors.diaperB };
+          final familySurface = switch (type) { 'feeding' => AppColors.feedS, 'nap' => AppColors.napS, _ => AppColors.diaperS };
+          final emoji = switch (type) { 'feeding' => '🍼', 'nap' => '😴', _ => '🧷' };
 
           return Container(
             padding: const EdgeInsets.all(AppSpacing.sp4),
@@ -191,13 +201,17 @@ class _HistoryTabState extends State<HistoryTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        inProgress ? 'Em andamento' : _formatDuration(event['duration_minutes']),
+                        isDiaper
+                            ? 'Troca de fralda'
+                            : (inProgress ? 'Em andamento' : _formatDuration(event['duration_minutes'])),
                         style: AppTypography.titleMedium,
                       ),
                       Text(
-                        inProgress
-                            ? 'início ${_formatClock(event['started_at'])}'
-                            : '${_formatClock(event['started_at'])} – ${_formatClock(event['ended_at'])}',
+                        isDiaper
+                            ? _formatClock(event['started_at'])
+                            : (inProgress
+                                ? 'início ${_formatClock(event['started_at'])}'
+                                : '${_formatClock(event['started_at'])} – ${_formatClock(event['ended_at'])}'),
                         style: AppTypography.bodyMedium,
                       ),
                     ],

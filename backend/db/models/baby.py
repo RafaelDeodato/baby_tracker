@@ -13,3 +13,4 @@ class Baby(db.Model):
     user = db.relationship("User", back_populates="babies")
     feedings = db.relationship("Feeding", back_populates="baby", cascade="all, delete-orphan")
     naps = db.relationship("Nap", back_populates="baby", cascade="all, delete-orphan")
+    diapers = db.relationship("Diaper", back_populates="baby", cascade="all, delete-orphan")

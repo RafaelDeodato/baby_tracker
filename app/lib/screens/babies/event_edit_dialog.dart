@@ -35,6 +35,7 @@ Widget _pill(BuildContext ctx, {required String text, required VoidCallback onTa
 Future<void> showEventEditDialog(
   BuildContext context, {
   required String title,
+  String startLabel = 'Início',
   required DateTime initialStartedAt,
   DateTime? initialEndedAt,
   required Future<String?> Function(DateTime startedAt, DateTime? endedAt) onSubmit,
@@ -93,7 +94,7 @@ Future<void> showEventEditDialog(
             children: [
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Início', style: AppTypography.labelSmall),
+                child: Text(startLabel, style: AppTypography.labelSmall),
               ),
               const SizedBox(height: AppSpacing.sp2),
               Row(

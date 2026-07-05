@@ -143,6 +143,7 @@ class _StatusTabState extends State<StatusTab> {
     final currentNap = status['current_nap'];
     final lastFeeding = status['last_feeding'];
     final lastNap = status['last_nap'];
+    final lastDiaper = status['last_diaper'];
     final awakeMinutes = status['awake_minutes'];
 
     return RefreshIndicator(
@@ -156,21 +157,32 @@ class _StatusTabState extends State<StatusTab> {
             _buildLastEventCard(
               emoji: '🍼',
               title: 'Última mamada',
-              familyBorder: AppColors.primaryB,
-              familySurface: AppColors.primaryS,
-              duration: lastFeeding['duration_minutes'],
+              familyBorder: AppColors.feedB,
+              familySurface: AppColors.feedS,
+              valueText: _formatDuration(lastFeeding['duration_minutes']),
               minutesSince: lastFeeding['minutes_since_end'],
             ),
             const SizedBox(height: AppSpacing.sp3),
           ],
-          if (lastNap != null)
+          if (lastNap != null) ...[
             _buildLastEventCard(
               emoji: '😴',
               title: 'Última soneca',
               familyBorder: AppColors.napB,
               familySurface: AppColors.napS,
-              duration: lastNap['duration_minutes'],
+              valueText: _formatDuration(lastNap['duration_minutes']),
               minutesSince: currentNap == null ? awakeMinutes : null,
+            ),
+            const SizedBox(height: AppSpacing.sp3),
+          ],
+          if (lastDiaper != null)
+            _buildLastEventCard(
+              emoji: '🧷',
+              title: 'Última troca de fralda',
+              familyBorder: AppColors.diaperB,
+              familySurface: AppColors.diaperS,
+              valueText: _formatClock(lastDiaper['changed_at']),
+              minutesSince: lastDiaper['minutes_since'],
             ),
         ],
       ),
@@ -182,8 +194,8 @@ class _StatusTabState extends State<StatusTab> {
       return _eventHeroCard(
         emoji: '🍼',
         label: 'Mamando',
-        familyBorder: AppColors.primaryB,
-        familySurface: AppColors.primaryS,
+        familyBorder: AppColors.feedB,
+        familySurface: AppColors.feedS,
         elapsedMinutes: currentFeeding['elapsed_minutes'],
         startedAt: currentFeeding['started_at'],
         actionLabel: 'Finalizar mamada',
@@ -192,6 +204,7 @@ class _StatusTabState extends State<StatusTab> {
           startedAt: currentFeeding['started_at'],
           onSave: (iso) => ApiService.updateFeeding(currentFeeding['id'], startedAt: iso),
         ),
+        showDiaperButton: false,
       );
     }
 
@@ -209,6 +222,7 @@ class _StatusTabState extends State<StatusTab> {
           startedAt: currentNap['started_at'],
           onSave: (iso) => ApiService.updateNap(currentNap['id'], startedAt: iso),
         ),
+        showDiaperButton: true,
       );
     }
 
@@ -239,9 +253,9 @@ class _StatusTabState extends State<StatusTab> {
               icon: const Text('🍼'),
               label: const Text('Iniciar mamada'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryS,
-                foregroundColor: AppColors.primaryT,
-                side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
+                backgroundColor: AppColors.feedS,
+                foregroundColor: AppColors.feedT,
+                side: const BorderSide(color: AppColors.feedB, width: AppShapes.borderRegular),
                 minimumSize: const Size.fromHeight(52),
               ),
             ),
@@ -263,7 +277,28 @@ class _StatusTabState extends State<StatusTab> {
               ),
             ),
           ),
+          const SizedBox(height: AppSpacing.sp3),
+          _diaperButton(),
         ],
+      ),
+    );
+  }
+
+  Widget _diaperButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: _actionLoading
+            ? null
+            : () => _runAction(() => ApiService.registerDiaper(widget.babyId)),
+        icon: const Text('🧷'),
+        label: const Text('Registrar fralda'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.diaperS,
+          foregroundColor: AppColors.diaperT,
+          side: const BorderSide(color: AppColors.diaperB, width: AppShapes.borderRegular),
+          minimumSize: const Size.fromHeight(52),
+        ),
       ),
     );
   }
@@ -278,6 +313,7 @@ class _StatusTabState extends State<StatusTab> {
     required String actionLabel,
     required VoidCallback onAction,
     required VoidCallback onAdjustStartTime,
+    required bool showDiaperButton,
   }) {
     return Container(
       width: double.infinity,
@@ -334,6 +370,10 @@ class _StatusTabState extends State<StatusTab> {
                   : Text(actionLabel),
             ),
           ),
+          if (showDiaperButton) ...[
+            const SizedBox(height: AppSpacing.sp3),
+            _diaperButton(),
+          ],
         ],
       ),
     );
@@ -344,7 +384,7 @@ class _StatusTabState extends State<StatusTab> {
     required String title,
     required Color familyBorder,
     required Color familySurface,
-    required int duration,
+    required String valueText,
     required int? minutesSince,
   }) {
     return Container(
@@ -368,7 +408,7 @@ class _StatusTabState extends State<StatusTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: AppTypography.bodyMedium),
-                Text(_formatDuration(duration), style: AppTypography.titleMedium),
+                Text(valueText, style: AppTypography.titleMedium),
               ],
             ),
           ),
