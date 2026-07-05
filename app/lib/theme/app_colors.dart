@@ -23,6 +23,14 @@ class AppColors {
   static const napB          = Color(0xFFB49BD8);
   static const napT          = Color(0xFF6B4F94);
 
+  static const feedS         = Color(0xFFE9EDEF);
+  static const feedB         = Color(0xFFA9B4B9);
+  static const feedT         = Color(0xFF47545A);
+
+  static const diaperS       = Color(0xFFDCC7B0);
+  static const diaperB       = Color(0xFFA9825F);
+  static const diaperT       = Color(0xFF5C3E23);
+
   static const warnS         = Color(0xFFFFE0CC);
   static const warnB         = Color(0xFFEBA877);
   static const warnT         = Color(0xFF9C5A2B);

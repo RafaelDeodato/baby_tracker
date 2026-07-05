@@ -1,6 +1,6 @@
 # Baby Tracker - Style Guide / Identidade Visual
 
-> Documento de identidade visual do app Flutter. Assim como a spec técnica e a visão de negócio, serve de fonte de verdade para desenvolvimento assistido por IA: **toda decisão visual no código deve referenciar os tokens definidos aqui**. Nada de cores ou raios "soltos" hardcoded nos widgets.
+> Documento de identidade visual do app Flutter. Assim como a spec técnica e o roadmap, serve de fonte de verdade para desenvolvimento assistido por IA: **toda decisão visual no código deve referenciar os tokens definidos aqui**. Nada de cores ou raios "soltos" hardcoded nos widgets.
 
 ---
 
@@ -56,16 +56,20 @@ Toda a interface usa **tons pastéis sobre fundo creme**. Cada cor funcional tem
 
 ## Cores Semânticas de Eventos
 
-Cada tipo de registro tem sua cor própria, usada consistentemente em ícones, cards e gráficos futuros:
+Cada tipo de registro tem sua cor própria, usada consistentemente em ícones, cards e gráficos futuros. Nenhuma cor de evento reaproveita uma cor funcional ou a cor primária — são famílias exclusivas, pra manter reconhecimento visual rápido sem ambiguidade de significado.
 
-| Evento | Família | Surface |
-|---|---|---|
-| 🍼 Mamada | Amarelo manteiga | `#FFEFC2` |
-| 😴 Soneca | Lilás lavanda | `#E6DCF5` (border `#B49BD8`, text `#6B4F94`) |
-| (futuro) Fralda | Verde menta | `#D4EDD9` |
-| (futuro) Saúde/medicação | Pêssego | `#FFE0CC` |
+| Evento | Família | Surface | Border | Text |
+|---|---|---|---|---|
+| 🍼 Mamada | Cinza-azulado ("leite") | `#E9EDEF` | `#A9B4B9` | `#47545A` |
+| 😴 Soneca | Lilás lavanda | `#E6DCF5` | `#B49BD8` | `#6B4F94` |
+| 🧷 Fralda | Marrom-café | `#DCC7B0` | `#A9825F` | `#5C3E23` |
+| (futuro) Saúde/medicação | Pêssego | `#FFE0CC` | `#EBA877` | `#9C5A2B` |
 
-> O lilás entra na paleta exclusivamente como cor da soneca — remete a noite/calma sem usar azul escuro.
+> **Mamada** usava o amarelo manteiga (cor primária do app) até esta revisão — reaproveitar a cor primária numa categoria de evento fazia ela se misturar com botões e destaques em geral, sem identidade própria. O cinza-azulado foi escolhido por ser o único tom **frio** da paleta: contra um app inteiro construído em tons quentes (creme, amarelo, marrom), ele se destaca em vez de se camuflar — e reforça a associação com leite.
+>
+> **Fralda** usava o mesmo verde menta da cor de Sucesso até esta revisão — reaproveitar uma cor funcional (confirmar/salvar) numa categoria de evento diluía o significado dela (ex: card de fralda verde ao lado de um snackbar "Salvo com sucesso!", também verde). O marrom-café foi escolhido deliberadamente mais neutro/acinzentado que o Pêssego (que é mais alaranjado/vivo e já está reservado para Atenção e Saúde), evitando que as duas fiquem parecidas.
+>
+> O lilás da soneca não muda — remete a noite/calma sem usar azul escuro, e já estava validado.
 
 ---
 
@@ -134,7 +138,7 @@ Regras:
 
 | Tipo | Fundo | Borda | Texto | Uso |
 |---|---|---|---|---|
-| Primário | `primarySurface` | 2px `primaryBorder` | `primaryText` | Ação principal da tela (Iniciar mamada) |
+| Primário | `primarySurface` | 2px `primaryBorder` | `primaryText` | Ação principal da tela |
 | Secundário | transparente | 2px `primaryBorder` | `primaryText` | Ações alternativas |
 | Destrutivo | `#FFD9E1` | 2px `#E58CA0` | `#A14D63` | Excluir, cancelar evento |
 | Sucesso | `#D4EDD9` | 2px `#86C295` | `#3F7A4F` | Finalizar/confirmar |
@@ -143,7 +147,7 @@ Regras:
 * Raio: `radiusMedium` (16) ou `radiusFull` para os botões-herói de iniciar/parar evento.
 * Texto: `labelLarge` (Nunito Bold 16).
 * Estado pressionado: escurecer o surface ~8% (sem ripple cinza do Material).
-* **Exceção — botões de iniciar evento lado a lado:** quando a tela oferece ações de iniciar mais de um tipo de evento ao mesmo tempo (ex: "Iniciar mamada" e "Iniciar soneca" na tela de status), cada botão usa a cor semântica do próprio evento (amarelo para mamada, lilás para soneca — ver Cores Semânticas de Eventos) em vez do Primário genérico. Objetivo: diferenciar visualmente as duas ações à primeira vista, já que o texto sozinho compete por atenção num app usado de madrugada. Quando existe só uma ação de iniciar na tela, usar Primário normalmente.
+* **Exceção — botões de iniciar evento lado a lado:** quando a tela oferece ações de iniciar mais de um tipo de evento ao mesmo tempo (ex: "Iniciar mamada", "Iniciar soneca", "Registrar fralda" na tela de status), cada botão usa a cor semântica do próprio evento (cinza-azulado para mamada, lilás para soneca, marrom-café para fralda — ver Cores Semânticas de Eventos) em vez do Primário genérico. Objetivo: diferenciar visualmente as ações à primeira vista, já que o texto sozinho compete por atenção num app usado de madrugada. Quando existe só uma ação de iniciar na tela, usar Primário normalmente.
 
 ## Inputs / Formulários
 
@@ -153,7 +157,7 @@ Regras:
 
 ## Cards de Evento
 
-* Fundo `surface`, borda 2px na cor da família do evento (mamada = amarelo, soneca = lilás).
+* Fundo `surface`, borda 2px na cor da família do evento (mamada = cinza-azulado, soneca = lilás, fralda = marrom-café).
 * Raio `radiusLarge` (24).
 * Ícone do evento dentro de um círculo com o Surface da família.
 * Duração em Fredoka, metadados em Nunito `bodyMedium` com `inkSoft`.
@@ -211,6 +215,22 @@ lib/
     └── app_theme.dart       # ThemeData montando tudo
 ```
 
+## Tokens de cor de evento (adicionar em `app_colors.dart`)
+
+```dart
+// Mamada — cinza-azulado ("leite")
+static const feedS = Color(0xFFE9EDEF);
+static const feedB = Color(0xFFA9B4B9);
+static const feedT = Color(0xFF47545A);
+
+// Fralda — marrom-café
+static const diaperS = Color(0xFFDCC7B0);
+static const diaperB = Color(0xFFA9825F);
+static const diaperT = Color(0xFF5C3E23);
+```
+
+> Segue a mesma convenção já usada em `napS`/`napB`/`napT`. `primaryS`/`primaryB`/`primaryT` deixam de ser usados como cor de mamada em qualquer widget — a mamada passa a referenciar exclusivamente `feedS`/`feedB`/`feedT`.
+
 ## Esqueleto do tema
 
 ```dart
@@ -261,7 +281,8 @@ final theme = ThemeData(
 ```text
 Fundo:        creme #FFFBF2          Texto: marrom quente #5C5346
 Primária:     amarelo manteiga       Destrutivo: rosa pastel (nunca vermelho)
-Sucesso:      verde menta            Info: azul céu        Soneca: lilás
+Sucesso:      verde menta            Info: azul céu
+Mamada:       cinza-azulado          Soneca: lilás          Fralda: marrom-café
 Fontes:       Fredoka (títulos/números) + Nunito (todo o resto)
 Bordas:       2px visíveis, na cor da família — sem sombras
 Raios:        12 / 16 / 24 / pill — canto reto não existe
