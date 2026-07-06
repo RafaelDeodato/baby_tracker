@@ -35,17 +35,39 @@ mas avaliado como necessário antes de considerar o V1 pronto — detalhado em
 `ON DELETE CASCADE` em `feedings`/`naps`, `PUT` de edição de eventos com
 validação de sobreposição, sessão persistente.
 
-### V2 — Fraldas + compartilhamento entre usuários
+### V2 — Fraldas + compartilhamento entre usuários ⏳ *em andamento*
 
-* Registro de troca de fraldas
-* Compartilhamento de bebês entre usuários: relação bebê↔usuário passa a
-  ser N:N, com modelo de permissões e convite/aceite. Público inicial:
-  coparentais, avós, cuidadores familiares (não profissionais ainda)
+* ✅ Registro de troca de fraldas
+* ⏳ Compartilhamento de bebês entre usuários: relação bebê↔usuário passa a
+  ser N:N. Convite feito por **`@username`** (campo único por usuário,
+  busca por correspondência exata — sem busca parcial/prefixo, pra não
+  virar um diretório de pessoas). Quem recebe o convite aceita ou recusa
+  pela própria caixa de notificações do app (ver abaixo) — sem depender
+  de e-mail. Público inicial: coparentais, avós, cuidadores familiares
+  (não profissionais ainda)
+* ⏳ **Notificações internas (inbox, não push)**: infraestrutura genérica
+  de notificações dentro do app, motivada pelo fluxo de convite mas
+  desenhada pra ser reaproveitada por qualquer aviso futuro (ver nota na
+  V3.4, que já nasce parcialmente resolvida por conta disso)
+* ⏳ **Segurança**, feita junto por não exigir infraestrutura nova:
+  exigência mínima de complexidade de senha no cadastro; lista de tokens
+  revogados (logout) passa a ser persistida no banco em vez de em
+  memória — sem isso, um token revogado volta a valer depois que uma
+  instância do Cloud Run reiniciar; rate limiting nos endpoints de
+  autenticação (proteção básica contra força bruta)
+* ❌ **Verificação de e-mail por token — decisão explícita de adiar**,
+  não esquecimento: só faz sentido quando o cadastro deixar de ser
+  restrito à família (exige e-mail transacional de verdade, ex: Resend —
+  SMTP direto não é confiável em plataformas serverless como Cloud Run).
+  Registrar aqui pra não reabrir essa discussão sem necessidade.
 
 Objetivo de arquitetura: validar o modelo de permissão N:N com um público
 de baixo risco antes de abrir para profissionais pagantes (V5+).
 
-### V3 — Complementação de dados de rotina
+Detalhamento técnico completo (schema, endpoints, regras) em
+`v2-compartilhamento-e-seguranca.md`.
+
+### V3 — Complementação de dados de rotina ✅ *fechado*
 
 Enriquecer os eventos que já existem (mamada, soneca, fralda) com campos
 adicionais — não são categorias novas de evento, são metadados a mais.
@@ -57,7 +79,8 @@ adicionais — não são categorias novas de evento, são metadados a mais.
 * Observação livre (opcional)
 
 **Sonecas** (maior valor pra sleep coaches):
-* Local do sono: berço / colo / carrinho / cama dos pais
+* Local do sono: berço / colo / carrinho / cama dos pais / carro (bebê
+  conforto)
 * Ambiente: claro/escuro, ruído branco sim/não
 * Observação livre (opcional)
 
@@ -65,6 +88,10 @@ adicionais — não são categorias novas de evento, são metadados a mais.
 * Tipo: só urina / só fezes / ambos
 * Consistência das fezes (líquida / pastosa / sólida)
 * Observação livre (opcional)
+
+Cada tipo tem um campo **estrutural** (dispara o estado de "incompleto"
+se ausente) e os demais são **refinamentos** (sempre opcionais). Detalhes
+em `v3-complementacao-dados-rotina.md`.
 
 ### V4 — Caderneta digital
 
@@ -121,14 +148,22 @@ pré-requisito técnico comum a todas elas, não uma decisão de produto.
 ### V3.3 — Medicamentos
 
 Lembretes de medicação e registro de rotina (se o bebê foi medicado ou
-não), na mesma lógica de mamada/soneca/fralda.
+não), na mesma lógica de mamada/soneca/fralda. O lembrete em si consome a
+infraestrutura de notificações que já existe a partir da V2 (ver abaixo) —
+só precisa adicionar o tipo de notificação e o agendamento, não construir
+o mecanismo do zero.
 
-### V3.4 — Notificações
+### V3.4 — Notificações *(infraestrutura antecipada na V2)*
 
-Motivada inicialmente por medicamentos (lembrete de dose), mas é
-infraestrutura reutilizável por versões futuras — lembrete de consulta,
-de vacina, etc. Registrada como item próprio porque a peça técnica
-(mecanismo de notificação) é maior que o caso de uso que a motivou.
+A tabela genérica de notificações (inbox interno) já é construída na V2,
+motivada pelo fluxo de convite de compartilhamento — não pelo lembrete de
+medicamento, como estava previsto originalmente aqui. O que resta pra
+este item, quando a V3.3 for implementada, é só adicionar o tipo de
+notificação de lembrete e o agendamento (algo que "acorda" e cria a
+notificação em um horário programado) — a infraestrutura de exibir,
+marcar como lida e listar já vai existir. Mecanismo de **push** (avisar
+mesmo com o app fechado) continua fora de escopo — o inbox da V2 é só
+para quando a pessoa abre o app.
 
 ### V4.1 — Dashboards e estatísticas
 
