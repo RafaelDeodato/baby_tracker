@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
 import '../../widgets/app_top_bar.dart';
 import 'status_tab.dart';
 import 'history_tab.dart';
@@ -32,16 +31,13 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
     return Scaffold(
       appBar: AppTopBar(title: _baby['name']),
       body: tabs[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        selectedItemColor: AppColors.primaryT,
-        unselectedItemColor: AppColors.inkSoft,
-        backgroundColor: AppColors.surface,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.info_outline), label: 'Status'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Histórico'),
-          BottomNavigationBarItem(icon: Icon(Icons.child_care), label: 'Perfil'),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) => setState(() => _currentIndex = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.info_outline), label: 'Status'),
+          NavigationDestination(icon: Icon(Icons.history), label: 'Histórico'),
+          NavigationDestination(icon: Icon(Icons.child_care), label: 'Perfil'),
         ],
       ),
     );

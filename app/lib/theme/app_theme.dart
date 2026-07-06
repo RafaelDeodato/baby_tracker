@@ -34,6 +34,21 @@ class AppTheme {
             ),
           ),
         ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: AppColors.surface,
+          indicatorColor: AppColors.primaryS,
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              color: states.contains(WidgetState.selected) ? AppColors.primaryT : AppColors.inkSoft,
+            ),
+          ),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => AppTypography.labelSmall.copyWith(
+              color: states.contains(WidgetState.selected) ? AppColors.primaryT : AppColors.inkSoft,
+              fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: AppColors.surface,
