@@ -10,7 +10,15 @@ def list_naps(baby_id: int, user_id: int) -> list[Nap]:
         raise ValueError("baby_not_found")
     return nap_repository.list_by_baby(baby_id)
 
-def start_nap(baby_id: int, user_id: int, started_at: datetime | None = None) -> Nap:
+def start_nap(
+    baby_id: int,
+    user_id: int,
+    started_at: datetime | None = None,
+    location: str | None = None,
+    light_environment: str | None = None,
+    white_noise: bool | None = None,
+    note: str | None = None
+) -> Nap:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
     if not baby:
         raise ValueError("baby_not_found")
@@ -23,7 +31,11 @@ def start_nap(baby_id: int, user_id: int, started_at: datetime | None = None) ->
 
     nap = Nap(
         baby_id=baby_id,
-        started_at=started_at or datetime.now(timezone.utc)
+        started_at=started_at or datetime.now(timezone.utc),
+        location=location,
+        light_environment=light_environment,
+        white_noise=white_noise,
+        note=note
     )
     return nap_repository.save(nap)
 
@@ -53,7 +65,11 @@ def update_nap(
     nap_id: int,
     user_id: int,
     started_at: datetime | None = None,
-    ended_at: datetime | None = None
+    ended_at: datetime | None = None,
+    location: str | None = None,
+    light_environment: str | None = None,
+    white_noise: bool | None = None,
+    note: str | None = None
 ) -> Nap:
     nap = nap_repository.find_by_id_and_user(nap_id, user_id)
     if not nap:
@@ -72,6 +88,10 @@ def update_nap(
 
     nap.started_at = new_started_at
     nap.ended_at = new_ended_at
+    if location is not None: nap.location = location
+    if light_environment is not None: nap.light_environment = light_environment
+    if white_noise is not None: nap.white_noise = white_noise
+    if note is not None: nap.note = note
     return nap_repository.save(nap)
 
 def delete_nap(nap_id: int, user_id: int) -> None:

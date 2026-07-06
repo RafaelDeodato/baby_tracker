@@ -10,7 +10,15 @@ def list_feedings(baby_id: int, user_id: int) -> list[Feeding]:
         raise ValueError("baby_not_found")
     return feeding_repository.list_by_baby(baby_id)
 
-def start_feeding(baby_id: int, user_id: int, started_at: datetime | None = None) -> Feeding:
+def start_feeding(
+    baby_id: int,
+    user_id: int,
+    started_at: datetime | None = None,
+    type: str | None = None,
+    side: str | None = None,
+    volume_ml: int | None = None,
+    note: str | None = None
+) -> Feeding:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
     if not baby:
         raise ValueError("baby_not_found")
@@ -23,7 +31,11 @@ def start_feeding(baby_id: int, user_id: int, started_at: datetime | None = None
 
     feeding = Feeding(
         baby_id=baby_id,
-        started_at=started_at or datetime.now(timezone.utc)
+        started_at=started_at or datetime.now(timezone.utc),
+        type=type,
+        side=side,
+        volume_ml=volume_ml,
+        note=note
     )
     return feeding_repository.save(feeding)
 
@@ -53,7 +65,11 @@ def update_feeding(
     feeding_id: int,
     user_id: int,
     started_at: datetime | None = None,
-    ended_at: datetime | None = None
+    ended_at: datetime | None = None,
+    type: str | None = None,
+    side: str | None = None,
+    volume_ml: int | None = None,
+    note: str | None = None
 ) -> Feeding:
     feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
     if not feeding:
@@ -72,6 +88,12 @@ def update_feeding(
 
     feeding.started_at = new_started_at
     feeding.ended_at = new_ended_at
+    # Update parcial — só sobrescreve os campos de complementação (V3) que
+    # vieram preenchidos na requisição.
+    if type is not None: feeding.type = type
+    if side is not None: feeding.side = side
+    if volume_ml is not None: feeding.volume_ml = volume_ml
+    if note is not None: feeding.note = note
     return feeding_repository.save(feeding)
 
 def delete_feeding(feeding_id: int, user_id: int) -> None:

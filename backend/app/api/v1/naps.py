@@ -13,6 +13,10 @@ def _serialize(nap, warning=None):
         "started_at": nap.started_at.isoformat(),
         "ended_at": nap.ended_at.isoformat() if nap.ended_at else None,
         "duration_minutes": nap.duration_minutes,
+        "location": nap.location,
+        "light_environment": nap.light_environment,
+        "white_noise": nap.white_noise,
+        "note": nap.note,
     }
     if warning:
         data["warning"] = warning
@@ -35,7 +39,11 @@ def start_nap(baby_id):
     data = request.get_json() or {}
     started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
     try:
-        nap = nap_service.start_nap(baby_id, user_id, started_at)
+        nap = nap_service.start_nap(
+            baby_id, user_id, started_at,
+            location=data.get("location"), light_environment=data.get("light_environment"),
+            white_noise=data.get("white_noise"), note=data.get("note")
+        )
         return jsonify(_serialize(nap)), 201
     except ValueError as e:
         error = str(e)
@@ -72,7 +80,11 @@ def update_nap(nap_id):
     started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
     ended_at = datetime.fromisoformat(data["ended_at"]) if "ended_at" in data else None
     try:
-        nap = nap_service.update_nap(nap_id, user_id, started_at, ended_at)
+        nap = nap_service.update_nap(
+            nap_id, user_id, started_at, ended_at,
+            location=data.get("location"), light_environment=data.get("light_environment"),
+            white_noise=data.get("white_noise"), note=data.get("note")
+        )
         return jsonify(_serialize(nap)), 200
     except ValueError as e:
         error = str(e)

@@ -13,6 +13,10 @@ def _serialize(feeding, warning=None):
         "started_at": feeding.started_at.isoformat(),
         "ended_at": feeding.ended_at.isoformat() if feeding.ended_at else None,
         "duration_minutes": feeding.duration_minutes,
+        "type": feeding.type,
+        "side": feeding.side,
+        "volume_ml": feeding.volume_ml,
+        "note": feeding.note,
     }
     if warning:
         data["warning"] = warning
@@ -35,7 +39,11 @@ def start_feeding(baby_id):
     data = request.get_json() or {}
     started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
     try:
-        feeding = feeding_service.start_feeding(baby_id, user_id, started_at)
+        feeding = feeding_service.start_feeding(
+            baby_id, user_id, started_at,
+            type=data.get("type"), side=data.get("side"),
+            volume_ml=data.get("volume_ml"), note=data.get("note")
+        )
         return jsonify(_serialize(feeding)), 201
     except ValueError as e:
         error = str(e)
@@ -72,7 +80,11 @@ def update_feeding(feeding_id):
     started_at = datetime.fromisoformat(data["started_at"]) if "started_at" in data else None
     ended_at = datetime.fromisoformat(data["ended_at"]) if "ended_at" in data else None
     try:
-        feeding = feeding_service.update_feeding(feeding_id, user_id, started_at, ended_at)
+        feeding = feeding_service.update_feeding(
+            feeding_id, user_id, started_at, ended_at,
+            type=data.get("type"), side=data.get("side"),
+            volume_ml=data.get("volume_ml"), note=data.get("note")
+        )
         return jsonify(_serialize(feeding)), 200
     except ValueError as e:
         error = str(e)

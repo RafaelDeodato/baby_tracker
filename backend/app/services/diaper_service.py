@@ -8,7 +8,14 @@ def list_diapers(baby_id: int, user_id: int) -> list[Diaper]:
         raise ValueError("baby_not_found")
     return diaper_repository.list_by_baby(baby_id)
 
-def register_diaper(baby_id: int, user_id: int, changed_at: datetime | None = None) -> Diaper:
+def register_diaper(
+    baby_id: int,
+    user_id: int,
+    changed_at: datetime | None = None,
+    type: str | None = None,
+    consistency: str | None = None,
+    note: str | None = None
+) -> Diaper:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
     if not baby:
         raise ValueError("baby_not_found")
@@ -21,16 +28,29 @@ def register_diaper(baby_id: int, user_id: int, changed_at: datetime | None = No
 
     diaper = Diaper(
         baby_id=baby_id,
-        changed_at=changed_at or datetime.now(timezone.utc)
+        changed_at=changed_at or datetime.now(timezone.utc),
+        type=type,
+        consistency=consistency,
+        note=note
     )
     return diaper_repository.save(diaper)
 
-def update_diaper(diaper_id: int, user_id: int, changed_at: datetime) -> Diaper:
+def update_diaper(
+    diaper_id: int,
+    user_id: int,
+    changed_at: datetime | None = None,
+    type: str | None = None,
+    consistency: str | None = None,
+    note: str | None = None
+) -> Diaper:
     diaper = diaper_repository.find_by_id_and_user(diaper_id, user_id)
     if not diaper:
         raise ValueError("diaper_not_found")
 
-    diaper.changed_at = changed_at
+    if changed_at is not None: diaper.changed_at = changed_at
+    if type is not None: diaper.type = type
+    if consistency is not None: diaper.consistency = consistency
+    if note is not None: diaper.note = note
     return diaper_repository.save(diaper)
 
 def delete_diaper(diaper_id: int, user_id: int) -> None:

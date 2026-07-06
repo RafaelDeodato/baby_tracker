@@ -11,6 +11,9 @@ def _serialize(diaper):
         "id": diaper.id,
         "baby_id": diaper.baby_id,
         "changed_at": diaper.changed_at.isoformat(),
+        "type": diaper.type,
+        "consistency": diaper.consistency,
+        "note": diaper.note,
     }
 
 @diapers_bp.get("/babies/<int:baby_id>/diapers/")
@@ -30,7 +33,10 @@ def register_diaper(baby_id):
     data = request.get_json() or {}
     changed_at = datetime.fromisoformat(data["changed_at"]) if "changed_at" in data else None
     try:
-        diaper = diaper_service.register_diaper(baby_id, user_id, changed_at)
+        diaper = diaper_service.register_diaper(
+            baby_id, user_id, changed_at,
+            type=data.get("type"), consistency=data.get("consistency"), note=data.get("note")
+        )
         return jsonify(_serialize(diaper)), 201
     except ValueError as e:
         error = str(e)
@@ -44,10 +50,12 @@ def register_diaper(baby_id):
 def update_diaper(diaper_id):
     user_id = int(get_jwt_identity())
     data = request.get_json() or {}
-    if "changed_at" not in data:
-        return jsonify({"error": "invalid_payload", "message": "changed_at é obrigatório."}), 422
+    changed_at = datetime.fromisoformat(data["changed_at"]) if "changed_at" in data else None
     try:
-        diaper = diaper_service.update_diaper(diaper_id, user_id, datetime.fromisoformat(data["changed_at"]))
+        diaper = diaper_service.update_diaper(
+            diaper_id, user_id, changed_at,
+            type=data.get("type"), consistency=data.get("consistency"), note=data.get("note")
+        )
         return jsonify(_serialize(diaper)), 200
     except ValueError:
         return jsonify({"error": "diaper_not_found", "message": "Registro de fralda não encontrado."}), 404
