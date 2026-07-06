@@ -43,8 +43,16 @@ validação de sobreposição, sessão persistente.
   busca por correspondência exata — sem busca parcial/prefixo, pra não
   virar um diretório de pessoas). Quem recebe o convite aceita ou recusa
   pela própria caixa de notificações do app (ver abaixo) — sem depender
-  de e-mail. Público inicial: coparentais, avós, cuidadores familiares
-  (não profissionais ainda)
+  de e-mail. Três níveis de permissão por bebê: `adm` (acesso total,
+  sem limite de quantos por bebê — "pai/mãe" é só um atalho de UX pra
+  esse nível), `tutor` (gerencia rotina, não gerencia acesso) e
+  `visualizador` (só leitura). Cada convite também tem um título livre
+  opcional (ex: "Vovó", "Dindo") — só de exibição, sem efeito na
+  permissão. Compartilhamento continua por bebê, não por família (uma
+  entidade Família foi cogitada e descartada — casos reais como guarda
+  compartilhada não se encaixam bem numa unidade rígida). Nível
+  "profissional" ainda **não** aparece nesta versão — ver ideia adiada
+  abaixo. Público desta versão: coparentais, avós, cuidadores familiares
 * ⏳ **Notificações internas (inbox, não push)**: infraestrutura genérica
   de notificações dentro do app, motivada pelo fluxo de convite mas
   desenhada pra ser reaproveitada por qualquer aviso futuro (ver nota na
@@ -66,6 +74,13 @@ de baixo risco antes de abrir para profissionais pagantes (V5+).
 
 Detalhamento técnico completo (schema, endpoints, regras) em
 `v2-compartilhamento-e-seguranca.md`.
+
+**Ideia registrada, não implementada nesta versão:** perfil profissional
+com um campo de título pré-definido (ex: "Consultora de Amamentação"),
+que seria sugerido automaticamente quando uma família convidasse aquele
+`@username`. Revisitar quando a V5+ (público profissional) estiver
+realmente sendo construída — só implementar se, nesse momento, continuar
+fazendo sentido de negócio e técnico.
 
 ### V3 — Complementação de dados de rotina ✅ *fechado*
 
