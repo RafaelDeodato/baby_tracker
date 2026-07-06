@@ -4,7 +4,7 @@ import 'storage_service.dart';
 import 'navigation_service.dart';
 
 class ApiService {
-  static const _baseUrl = 'http://192.168.0.238:5000/api/v1';
+  static const _baseUrl = 'http://192.168.10.103:5000/api/v1';
 
   // ── Helper principal ──────────────────────────────
   static Future<http.Response> _request(
@@ -143,10 +143,22 @@ class ApiService {
     return res.statusCode;
   }
 
-  static Future<Map<String, dynamic>> updateFeeding(int feedingId, {String? startedAt, String? endedAt}) async {
+  static Future<Map<String, dynamic>> updateFeeding(
+    int feedingId, {
+    String? startedAt,
+    String? endedAt,
+    String? type,
+    String? side,
+    int? volumeMl,
+    String? note,
+  }) async {
     final body = <String, dynamic>{
       'started_at': ?startedAt,
       'ended_at': ?endedAt,
+      'type': ?type,
+      'side': ?side,
+      'volume_ml': ?volumeMl,
+      'note': ?note,
     };
     final res = await _request('PUT', '/feedings/$feedingId', body: body);
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
@@ -168,10 +180,22 @@ class ApiService {
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 
-  static Future<Map<String, dynamic>> updateNap(int napId, {String? startedAt, String? endedAt}) async {
+  static Future<Map<String, dynamic>> updateNap(
+    int napId, {
+    String? startedAt,
+    String? endedAt,
+    String? location,
+    String? lightEnvironment,
+    bool? whiteNoise,
+    String? note,
+  }) async {
     final body = <String, dynamic>{
       'started_at': ?startedAt,
       'ended_at': ?endedAt,
+      'location': ?location,
+      'light_environment': ?lightEnvironment,
+      'white_noise': ?whiteNoise,
+      'note': ?note,
     };
     final res = await _request('PUT', '/naps/$napId', body: body);
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
@@ -188,14 +212,37 @@ class ApiService {
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 
-  static Future<Map<String, dynamic>> registerDiaper(int babyId, {String? changedAt}) async {
-    final body = <String, dynamic>{'changed_at': ?changedAt};
+  static Future<Map<String, dynamic>> registerDiaper(
+    int babyId, {
+    String? changedAt,
+    String? type,
+    String? consistency,
+    String? note,
+  }) async {
+    final body = <String, dynamic>{
+      'changed_at': ?changedAt,
+      'type': ?type,
+      'consistency': ?consistency,
+      'note': ?note,
+    };
     final res = await _request('POST', '/babies/$babyId/diapers/', body: body);
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 
-  static Future<Map<String, dynamic>> updateDiaper(int diaperId, String changedAt) async {
-    final res = await _request('PUT', '/diapers/$diaperId', body: {'changed_at': changedAt});
+  static Future<Map<String, dynamic>> updateDiaper(
+    int diaperId, {
+    String? changedAt,
+    String? type,
+    String? consistency,
+    String? note,
+  }) async {
+    final body = <String, dynamic>{
+      'changed_at': ?changedAt,
+      'type': ?type,
+      'consistency': ?consistency,
+      'note': ?note,
+    };
+    final res = await _request('PUT', '/diapers/$diaperId', body: body);
     return {'status': res.statusCode, 'data': jsonDecode(res.body)};
   }
 

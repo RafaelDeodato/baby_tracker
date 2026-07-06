@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
+import 'event_details_fields.dart';
 
 String _formatDate(DateTime dt) {
   return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
@@ -38,12 +39,15 @@ Future<void> showEventEditDialog(
   String startLabel = 'Início',
   required DateTime initialStartedAt,
   DateTime? initialEndedAt,
-  required Future<String?> Function(DateTime startedAt, DateTime? endedAt) onSubmit,
+  required String eventType,
+  required Map<String, dynamic> initialDetailsValues,
+  required Future<String?> Function(DateTime startedAt, DateTime? endedAt, Map<String, dynamic> details) onSubmit,
 }) async {
   DateTime startedAt = initialStartedAt;
   DateTime? endedAt = initialEndedAt;
   final canEditEnd = initialEndedAt != null;
   String? errorText;
+  final details = Map<String, dynamic>.from(initialDetailsValues);
 
   Future<void> pickDate(StateSetter setDialogState, BuildContext ctx, bool isStart) async {
     final current = isStart ? startedAt : endedAt!;
@@ -131,6 +135,12 @@ Future<void> showEventEditDialog(
                   ],
                 ),
               ],
+              const SizedBox(height: AppSpacing.sp4),
+              EventDetailsFields(
+                eventType: eventType,
+                values: details,
+                onChanged: (field, value) => setDialogState(() => details[field] = value),
+              ),
               if (errorText != null) ...[
                 const SizedBox(height: AppSpacing.sp4),
                 Container(
@@ -149,7 +159,7 @@ Future<void> showEventEditDialog(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    final error = await onSubmit(startedAt, endedAt);
+                    final error = await onSubmit(startedAt, endedAt, details);
                     if (error == null && ctx.mounted) {
                       Navigator.pop(ctx);
                     } else {

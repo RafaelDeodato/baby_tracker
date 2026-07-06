@@ -4,6 +4,7 @@ import '../../theme/app_shapes.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../services/api_service.dart';
+import 'event_details_fields.dart';
 
 class StatusTab extends StatefulWidget {
   final int babyId;
@@ -120,6 +121,27 @@ class _StatusTabState extends State<StatusTab> {
     await _runAction(() => onSave(adjusted.toUtc().toIso8601String()));
   }
 
+  /// Salva um campo de complementação de dados (V3) do evento em andamento.
+  /// Cada seleção de chip (ou saída de foco num campo de texto) chama isso
+  /// direto — sem botão de salvar separado.
+  Future<void> _saveEventDetail(String eventType, int eventId, String field, dynamic value) {
+    return _runAction(() => eventType == 'feeding'
+        ? ApiService.updateFeeding(
+            eventId,
+            type: field == 'type' ? value : null,
+            side: field == 'side' ? value : null,
+            volumeMl: field == 'volume_ml' ? value : null,
+            note: field == 'note' ? value : null,
+          )
+        : ApiService.updateNap(
+            eventId,
+            location: field == 'location' ? value : null,
+            lightEnvironment: field == 'light_environment' ? value : null,
+            whiteNoise: field == 'white_noise' ? value : null,
+            note: field == 'note' ? value : null,
+          ));
+  }
+
   String _formatDuration(int minutes) {
     final hours = minutes ~/ 60;
     final rem = minutes % 60;
@@ -205,6 +227,9 @@ class _StatusTabState extends State<StatusTab> {
           onSave: (iso) => ApiService.updateFeeding(currentFeeding['id'], startedAt: iso),
         ),
         showDiaperButton: false,
+        eventType: 'feeding',
+        eventId: currentFeeding['id'],
+        detailsValues: currentFeeding,
       );
     }
 
@@ -223,6 +248,9 @@ class _StatusTabState extends State<StatusTab> {
           onSave: (iso) => ApiService.updateNap(currentNap['id'], startedAt: iso),
         ),
         showDiaperButton: true,
+        eventType: 'nap',
+        eventId: currentNap['id'],
+        detailsValues: currentNap,
       );
     }
 
@@ -288,9 +316,7 @@ class _StatusTabState extends State<StatusTab> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: _actionLoading
-            ? null
-            : () => _runAction(() => ApiService.registerDiaper(widget.babyId)),
+        onPressed: _actionLoading ? null : _showRegisterDiaperDialog,
         icon: const Text('🧷'),
         label: const Text('Registrar fralda'),
         style: ElevatedButton.styleFrom(
@@ -299,6 +325,75 @@ class _StatusTabState extends State<StatusTab> {
           side: const BorderSide(color: AppColors.diaperB, width: AppShapes.borderRegular),
           minimumSize: const Size.fromHeight(52),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showRegisterDiaperDialog() async {
+    final values = <String, dynamic>{};
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final hasAnyValue = values.values.any((v) => v != null && v != '');
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
+              side: const BorderSide(color: AppColors.outline, width: AppShapes.borderRegular),
+            ),
+            title: Text('Registrar fralda', style: Theme.of(ctx).textTheme.titleMedium),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  EventDetailsFields(
+                    eventType: 'diaper',
+                    values: values,
+                    onChanged: (field, value) => setDialogState(() => values[field] = value),
+                  ),
+                  const SizedBox(height: AppSpacing.sp6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _runAction(() => ApiService.registerDiaper(
+                              widget.babyId,
+                              type: values['type'],
+                              consistency: values['consistency'],
+                              note: values['note'],
+                            ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.diaperS,
+                        foregroundColor: AppColors.diaperT,
+                        side: const BorderSide(color: AppColors.diaperB, width: AppShapes.borderRegular),
+                        elevation: 0,
+                      ),
+                      child: Text(hasAnyValue ? 'Salvar' : 'Preencher depois'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sp3),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryT,
+                        side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.radiusFull)),
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -314,6 +409,9 @@ class _StatusTabState extends State<StatusTab> {
     required VoidCallback onAction,
     required VoidCallback onAdjustStartTime,
     required bool showDiaperButton,
+    required String eventType,
+    required int eventId,
+    required Map<String, dynamic> detailsValues,
   }) {
     return Container(
       width: double.infinity,
@@ -352,6 +450,16 @@ class _StatusTabState extends State<StatusTab> {
                   Text('desde ${_formatClock(startedAt)}', style: AppTypography.bodyMedium.copyWith(color: AppColors.ink)),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sp6),
+          SizedBox(
+            width: double.infinity,
+            child: EventDetailsFields(
+              key: ValueKey('$eventType-$eventId'),
+              eventType: eventType,
+              values: detailsValues,
+              onChanged: (field, value) => _saveEventDetail(eventType, eventId, field, value),
             ),
           ),
           const SizedBox(height: AppSpacing.sp6),
