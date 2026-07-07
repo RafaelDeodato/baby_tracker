@@ -57,12 +57,14 @@ validação de sobreposição, sessão persistente.
   de notificações dentro do app, motivada pelo fluxo de convite mas
   desenhada pra ser reaproveitada por qualquer aviso futuro (ver nota na
   V3.4, que já nasce parcialmente resolvida por conta disso)
-* ⏳ **Segurança**, feita junto por não exigir infraestrutura nova:
+* ✅ **Segurança**, feita junto por não exigir infraestrutura nova:
   exigência mínima de complexidade de senha no cadastro; lista de tokens
-  revogados (logout) passa a ser persistida no banco em vez de em
-  memória — sem isso, um token revogado volta a valer depois que uma
-  instância do Cloud Run reiniciar; rate limiting nos endpoints de
-  autenticação (proteção básica contra força bruta)
+  revogados (logout) persistida no banco (`revoked_tokens`) em vez de em
+  memória — sem isso, um token revogado voltaria a valer depois que uma
+  instância do Cloud Run reiniciasse; rate limiting (Flask-Limiter) nos
+  endpoints de autenticação; CORS restrito por variável de ambiente (nega
+  todas as origens de navegador por padrão, até existir um cliente web
+  real). Detalhes em `baby-tracker-auditoria-seguranca.md`.
 * ❌ **Verificação de e-mail por token — decisão explícita de adiar**,
   não esquecimento: só faz sentido quando o cadastro deixar de ser
   restrito à família (exige e-mail transacional de verdade, ex: Resend —

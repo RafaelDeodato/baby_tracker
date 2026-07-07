@@ -184,36 +184,39 @@ Isso vale para `babies`, `feedings`, `naps`, `diapers`.
   pode editar/excluir o bebê nem gerenciar quem tem acesso.
 * `visualizador`: só leitura em tudo.
 
-## Segurança (sem infraestrutura nova)
+## Segurança (sem infraestrutura nova) ✅ *implementado*
+
+Os quatro itens abaixo foram implementados e testados (ver
+`baby-tracker-auditoria-seguranca.md` para o levantamento que motivou
+priorizá-los independentemente do resto da V2).
 
 ### Complexidade mínima de senha
 
-No `register`: mínimo 8 caracteres, exigir ao menos uma letra e um
-número. Validar no service, retornar `422` com mensagem clara se não
-atender.
+`core/security.py::is_password_strong` — mínimo 8 caracteres, exige ao
+menos uma letra e um número. Validado em `auth_service.register()`,
+retorna `422` (`weak_password`) se não atender.
 
 ### Blocklist de token persistida
 
-Hoje `token_blocklist` é um `set()` em memória — se perde a cada
-reinício de instância. Como o deploy é Cloud Run (escala a zero, reinicia
-instâncias com frequência), um token revogado no logout pode voltar a
-funcionar depois de um reinício. Substituir por uma tabela:
-
-```sql
-revoked_tokens
-  jti           VARCHAR PRIMARY KEY
-  revoked_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-```
-
-`logout` grava o `jti` aqui em vez de adicionar a um `set()`; a checagem
-do JWT consulta a tabela em vez da variável em memória.
+Tabela `revoked_tokens` (`jti` VARCHAR PRIMARY KEY, `revoked_at`
+TIMESTAMPTZ) substituiu o `set()` em memória. `logout` grava o `jti` via
+`revoked_token_repository`; o `token_in_blocklist_loader` do
+Flask-JWT-Extended consulta a tabela em vez da variável em memória.
 
 ### Rate limiting em autenticação
 
-Adicionar `Flask-Limiter` (nova dependência, sem infraestrutura externa —
-funciona em memória por instância, suficiente para este estágio). Limitar
-`POST /auth/login` e `POST /auth/register` a, por exemplo, 5 tentativas
-por minuto por IP. Retornar `429` ao exceder.
+`Flask-Limiter` em memória (`core/limiter.py`), limitando `POST
+/auth/login` e `POST /auth/register` a 5 tentativas/minuto por IP,
+retornando `429`. Resposta de erro do limiter sobrescrita para JSON
+(`error`/`message`) — o formato HTML padrão da lib quebraria o contrato
+de resposta que o resto da API segue.
+
+### CORS restrito
+
+`CORS_ALLOWED_ORIGINS` (variável de ambiente, lista separada por
+vírgula) substitui `CORS(app)` sem restrição. Vazio por padrão — nega
+CORS pra qualquer origem de navegador até existir um cliente web real
+(o app mobile não é afetado por CORS).
 
 ## Ideias registradas para versões futuras (não implementar agora)
 
