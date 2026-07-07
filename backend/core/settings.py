@@ -20,3 +20,11 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(
         seconds=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_SECONDS", 60 * 60 * 24 * 30))
     )
+
+    # Vazio por padrão — nega CORS pra qualquer origem de navegador até que
+    # um cliente web real exista (o app mobile não é afetado por CORS, só
+    # requisições feitas a partir de um navegador). Configurar via variável
+    # de ambiente (separado por vírgula) quando esse cliente existir.
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()
+    ]
