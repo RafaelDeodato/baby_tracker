@@ -22,14 +22,16 @@ segurança que não exigem infraestrutura nova.
 
 ## Cadastro sem verificação de e-mail (decisão desta versão)
 
-* Login/identidade giram inteiramente em torno de `username` + senha —
-  **sem verificação nenhuma** por enquanto (nem e-mail, nem telefone).
-  Adequado para a fase de validação com poucas famílias (você + esposa,
-  depois até ~10 famílias reais).
-* Manter um campo `email` em `users`, **opcional e não verificado** —
-  só armazenado, sem uso funcional ainda. Motivo: evitar precisar
-  contatar cada família manualmente pra coletar esse dado depois, quando
-  a verificação de fato for implementada (ver "Fora de escopo").
+* `email` **continua obrigatório e único**, exatamente como já é hoje —
+  isso não muda. `username` é um campo **novo**, também obrigatório e
+  único, que se soma ao `email` (cadastro passa a pedir os dois).
+* **Sem verificação nenhuma** por enquanto (nem e-mail, nem telefone) —
+  adequado para a fase de validação com poucas famílias (você + esposa,
+  depois até ~10 famílias reais). Verificação de fato fica pra depois
+  (ver "Fora de escopo").
+* **Login aceita `username` OU `email`** no mesmo campo — a API tenta
+  primeiro como `username`; se não encontrar, tenta como `email`. Do
+  ponto de vista do usuário é um único campo "Usuário ou e-mail".
 * Recuperação de senha, nesta fase, é manual (reset direto no banco a
   pedido do usuário) — aceitável no volume de usuários desta versão.
 
@@ -54,7 +56,7 @@ pessoa para aquele bebê específico):
 ## Título livre por convite
 
 Além do nível de permissão, cada convite tem um campo de texto livre
-opcional — `titulo` (ex: "Tio", "Vovó", "Dindo", "Amiga da família") —
+opcional — `title` (ex: "Tio", "Vovó", "Dindo", "Amiga da família") —
 puramente de exibição, sem efeito nenhum na permissão. Quem convida
 digita o que fizer sentido para aquela pessoa; sem lista fixa de opções.
 
@@ -67,7 +69,7 @@ id            SERIAL PRIMARY KEY
 baby_id       INTEGER NOT NULL REFERENCES babies(id) ON DELETE CASCADE
 user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
 role          VARCHAR NOT NULL DEFAULT 'tutor'   -- 'adm' | 'tutor' | 'visualizador'
-titulo        VARCHAR NULL                        -- texto livre, opcional
+title         VARCHAR NULL                       -- texto livre, opcional
 created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 
 UNIQUE (baby_id, user_id)
@@ -96,7 +98,7 @@ baby_id         INTEGER NOT NULL REFERENCES babies(id) ON DELETE CASCADE
 invited_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
 invited_by_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
 role            VARCHAR NOT NULL            -- 'adm' | 'tutor' | 'visualizador' — nível oferecido no convite
-titulo          VARCHAR NULL                 -- copiado para baby_users ao aceitar
+title           VARCHAR NULL                -- copiado para baby_users ao aceitar
 status          VARCHAR NOT NULL DEFAULT 'pending'  -- 'pending' | 'accepted' | 'declined'
 created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 resolved_at     TIMESTAMPTZ NULL
@@ -131,7 +133,38 @@ created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 * **Não** transformar o alerta de "evento incompleto" (V3) em
   notificação — continua passivo, descoberto ao abrir o Histórico.
 
+**Como os campos se conectam, na prática** (exemplo: você convida
+`@andressa` como `tutor` da Heloísa):
+
+1. Cria-se `baby_invites` (`id=5`, `baby_id=1`, `invited_user_id=<andressa>`,
+   `role='tutor'`, `status='pending'`).
+2. Cria-se `notifications` (`user_id=<andressa>` — quem **recebe**;
+   `type='baby_invite_received'`; `reference_id=5` — aponta pro convite
+   que originou; `read=false`).
+3. `GET /notifications` da Andressa precisa devolver dado suficiente pra
+   renderizar a frase ("Rafael te convidou pra Heloísa como tutor") — a
+   tabela `notifications` sozinha não guarda esse texto, só a referência.
+   Resolver isso no backend (join com `baby_invites`/`babies`/`users` ao
+   montar a resposta) em vez de o app ter que buscar o convite à parte.
+4. O botão "Aceitar" dentro da notificação usa o `reference_id` (=5)
+   como id do convite pra chamar `POST /invites/5/accept` — não existe
+   uma ação própria de "aceitar notificação", a notificação só carrega a
+   referência pro que precisa ser resolvido.
+5. Aceitar cria a linha em `baby_users`, marca o convite como
+   `accepted`, e gera uma notificação nova (`baby_invite_accepted`) pra
+   você — o mesmo padrão se repete, com você agora como `user_id`.
+
+A caixa de notificações fica na `AppTopBar`, ao lado do ícone de perfil
+do usuário (ícone de sino, com indicador de não lidas).
+
 ## API
+
+### Auth (endpoints existentes, body muda)
+
+```text
+POST /auth/register   body: { name, email, username, password }   -- username novo, email continua obrigatório
+POST /auth/login      body: { identifier, password }               -- identifier = username OU email, tenta os dois
+```
 
 ### Username
 
@@ -142,7 +175,7 @@ GET  /users/search?username={exato}   → dados públicos mínimos (id, name, us
 ### Convites
 
 ```text
-POST   /babies/{id}/invites            body: { username, role, titulo? }
+POST   /babies/{id}/invites            body: { username, role, title? }
         → 404 genérico se username não existir
         → 422 se role inválido
         → 409 se já existe convite pending para esse baby+usuário
@@ -150,7 +183,7 @@ POST   /babies/{id}/invites            body: { username, role, titulo? }
 
 GET    /invites                        → lista convites pendentes recebidos pelo usuário autenticado
 
-POST   /invites/{id}/accept            → cria linha em baby_users com o role/titulo do convite,
+POST   /invites/{id}/accept            → cria linha em baby_users com o role/title do convite,
                                           marca invite como accepted,
                                           cria notification (baby_invite_accepted) para quem convidou
 
@@ -161,8 +194,8 @@ POST   /invites/{id}/decline           → marca invite como declined,
 ### Gerenciar acesso (só `adm`)
 
 ```text
-GET    /babies/{id}/users              → lista quem tem acesso ao bebê (nome, username, role, titulo)
-PUT    /babies/{id}/users/{user_id}    body: { role?, titulo? }   → alterar nível/título de alguém
+GET    /babies/{id}/users              → lista quem tem acesso ao bebê (nome, username, role, title)
+PUT    /babies/{id}/users/{user_id}    body: { role?, title? }   → alterar nível/título de alguém
 DELETE /babies/{id}/users/{user_id}    → remover acesso de alguém
 ```
 
@@ -223,7 +256,7 @@ CORS pra qualquer origem de navegador até existir um cliente web real
 ### Perfil profissional com título pré-definido
 
 Ideia discutida e propositalmente adiada: um campo opcional
-`titulo_profissional` no próprio perfil do usuário (ex: "Consultora de
+`professional_title` no próprio perfil do usuário (ex: "Consultora de
 Amamentação"). Quando uma família convidasse por `@username` alguém com
 esse campo preenchido, a interface sugeriria automaticamente esse título
 no convite (a família ainda poderia sobrescrever). Não implementar nesta
