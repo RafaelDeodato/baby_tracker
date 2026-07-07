@@ -21,6 +21,7 @@ def register():
         return jsonify({"error": str(e), "message": "E-mail já cadastrado."}), 409
 
 @auth_bp.post("/login")
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json()
     try:
@@ -28,7 +29,6 @@ def login():
             email=data["email"],
             password=data["password"]
         )
-@limiter.limit("5 per minute")
         return jsonify(tokens), 200
     except ValueError:
         return jsonify({"error": "invalid_credentials", "message": "E-mail ou senha inválidos."}), 401
