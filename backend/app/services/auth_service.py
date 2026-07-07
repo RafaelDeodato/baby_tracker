@@ -4,11 +4,14 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 from db.base import db
 from db.models.user import User
 from app.repositories import user_repository, revoked_token_repository
-from core.security import hash_password, verify_password
+from core.security import hash_password, verify_password, is_password_strong
 
 def register(name: str, email: str, password: str) -> User:
     if user_repository.find_by_email(email):
         raise ValueError("email_already_registered")
+
+    if not is_password_strong(password):
+        raise ValueError("weak_password")
 
     user = User(
         name=name,

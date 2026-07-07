@@ -18,7 +18,14 @@ def register():
         )
         return jsonify({"id": user.id, "name": user.name, "email": user.email}), 201
     except ValueError as e:
-        return jsonify({"error": str(e), "message": "E-mail já cadastrado."}), 409
+        error = str(e)
+        if error == "email_already_registered":
+            return jsonify({"error": error, "message": "E-mail já cadastrado."}), 409
+        if error == "weak_password":
+            return jsonify({
+                "error": error,
+                "message": "A senha precisa ter no mínimo 8 caracteres, com ao menos uma letra e um número."
+            }), 422
 
 @auth_bp.post("/login")
 @limiter.limit("5 per minute")
