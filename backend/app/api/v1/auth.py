@@ -2,10 +2,12 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
 from app.services import auth_service
+from core.limiter import limiter
 
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.post("/register")
+@limiter.limit("5 per minute")
 def register():
     data = request.get_json()
     try:
@@ -26,6 +28,7 @@ def login():
             email=data["email"],
             password=data["password"]
         )
+@limiter.limit("5 per minute")
         return jsonify(tokens), 200
     except ValueError:
         return jsonify({"error": "invalid_credentials", "message": "E-mail ou senha inválidos."}), 401
