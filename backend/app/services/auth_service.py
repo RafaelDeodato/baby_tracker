@@ -3,12 +3,8 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 
 from db.base import db
 from db.models.user import User
-from app.repositories import user_repository
+from app.repositories import user_repository, revoked_token_repository
 from core.security import hash_password, verify_password
-
-# Armazena refresh tokens revogados em memória.
-# Simples para o MVP — será perdido ao reiniciar o servidor.
-token_blocklist: set[str] = set()
 
 def register(name: str, email: str, password: str) -> User:
     if user_repository.find_by_email(email):
@@ -43,4 +39,4 @@ def refresh(identity: str) -> dict:
     return {"access_token": access_token}
 
 def logout(jti: str) -> None:
-    token_blocklist.add(jti)
+    revoked_token_repository.add(jti)
