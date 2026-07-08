@@ -3,15 +3,17 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.services import baby_service
+from app.repositories import baby_user_repository
 
 babies_bp = Blueprint("babies", __name__)
 
-def _serialize(baby):
+def _serialize(baby, role=None):
     return {
         "id": baby.id,
         "name": baby.name,
         "birth_date": baby.birth_date.isoformat(),
-        "created_at": baby.created_at.isoformat()
+        "created_at": baby.created_at.isoformat(),
+        "role": role,
     }
 
 @babies_bp.get("/")
@@ -19,7 +21,7 @@ def _serialize(baby):
 def list_babies():
     user_id = int(get_jwt_identity())
     babies = baby_service.list_babies(user_id)
-    return jsonify([_serialize(b) for b in babies]), 200
+    return jsonify([_serialize(b, baby_user_repository.find_role(b.id, user_id)) for b in babies]), 200
 
 @babies_bp.post("/")
 @jwt_required()
@@ -31,7 +33,7 @@ def create_baby():
         name=data["name"],
         birth_date=date.fromisoformat(data["birth_date"])
     )
-    return jsonify(_serialize(baby)), 201
+    return jsonify(_serialize(baby, "adm")), 201
 
 @babies_bp.get("/<int:baby_id>")
 @jwt_required()
@@ -39,7 +41,7 @@ def get_baby(baby_id):
     user_id = int(get_jwt_identity())
     try:
         baby = baby_service.get_baby(baby_id, user_id)
-        return jsonify(_serialize(baby)), 200
+        return jsonify(_serialize(baby, baby_user_repository.find_role(baby_id, user_id))), 200
     except ValueError:
         return jsonify({"error": "baby_not_found", "message": "Bebê não encontrado."}), 404
 
@@ -55,7 +57,7 @@ def update_baby(baby_id):
             name=data["name"],
             birth_date=date.fromisoformat(data["birth_date"])
         )
-        return jsonify(_serialize(baby)), 200
+        return jsonify(_serialize(baby, "adm")), 200
     except ValueError as e:
         if str(e) == "forbidden":
             return jsonify({"error": "forbidden", "message": "Você não tem permissão pra editar este bebê."}), 403
