@@ -173,7 +173,6 @@ class _HistoryTabState extends State<HistoryTab> {
             ),
         };
         if (result['status'] == 200) {
-          await _fetchHistory();
           return null;
         }
         return result['data'] is Map
@@ -181,6 +180,10 @@ class _HistoryTabState extends State<HistoryTab> {
             : 'Não foi possível salvar.';
       },
     );
+    // Só busca de novo depois que o dialog já fechou de vez — ver
+    // manage_access_screen.dart pra mais contexto sobre o crash que
+    // esse padrão evita.
+    _fetchHistory();
   }
 
   String _formatDuration(int minutes) {
