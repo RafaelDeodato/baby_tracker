@@ -8,8 +8,9 @@ import 'event_edit_dialog.dart';
 
 class HistoryTab extends StatefulWidget {
   final int babyId;
+  final String role;
 
-  const HistoryTab({super.key, required this.babyId});
+  const HistoryTab({super.key, required this.babyId, required this.role});
 
   @override
   State<HistoryTab> createState() => _HistoryTabState();
@@ -21,6 +22,8 @@ class _HistoryTabState extends State<HistoryTab> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _events = [];
+
+  bool get _canEdit => widget.role == 'adm' || widget.role == 'tutor';
 
   @override
   void initState() {
@@ -375,7 +378,7 @@ class _HistoryTabState extends State<HistoryTab> {
             const SizedBox(width: AppSpacing.sp3),
             Expanded(
               child: GestureDetector(
-                onTap: () => _editEvent(event),
+                onTap: _canEdit ? () => _editEvent(event) : null,
                 child: Container(
                   margin: const EdgeInsets.only(bottom: AppSpacing.sp3),
                   padding: const EdgeInsets.all(AppSpacing.sp4),
@@ -421,14 +424,16 @@ class _HistoryTabState extends State<HistoryTab> {
             ],
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.edit_outlined, color: AppColors.inkSoft),
-          onPressed: () => _editEvent(event),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline, color: AppColors.dangerT),
-          onPressed: () => _confirmDelete(event),
-        ),
+        if (_canEdit) ...[
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppColors.inkSoft),
+            onPressed: () => _editEvent(event),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.dangerT),
+            onPressed: () => _confirmDelete(event),
+          ),
+        ],
       ],
     );
   }

@@ -137,36 +137,38 @@ class _BabyProfileTabState extends State<BabyProfileTab> {
                     ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.sp8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _deleting ? null : _editBaby,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryT,
-                      side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.radiusMedium)),
-                      minimumSize: const Size.fromHeight(52),
+                if (isAdmin) ...[
+                  const SizedBox(height: AppSpacing.sp8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _deleting ? null : _editBaby,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryT,
+                        side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.radiusMedium)),
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      child: const Text('Editar bebê'),
                     ),
-                    child: const Text('Editar bebê'),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sp3),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _deleting ? null : _confirmDelete,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.dangerS,
-                      foregroundColor: AppColors.dangerT,
-                      side: const BorderSide(color: AppColors.dangerB, width: AppShapes.borderRegular),
-                      minimumSize: const Size.fromHeight(52),
+                  const SizedBox(height: AppSpacing.sp3),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _deleting ? null : _confirmDelete,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.dangerS,
+                        foregroundColor: AppColors.dangerT,
+                        side: const BorderSide(color: AppColors.dangerB, width: AppShapes.borderRegular),
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      child: _deleting
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('Excluir bebê'),
                     ),
-                    child: _deleting
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Excluir bebê'),
                   ),
-                ),
+                ],
               ],
             ),
           ),

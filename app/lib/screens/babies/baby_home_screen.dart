@@ -20,8 +20,8 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      StatusTab(babyId: _baby['id']),
-      HistoryTab(babyId: _baby['id']),
+      StatusTab(babyId: _baby['id'], role: _baby['role']),
+      HistoryTab(babyId: _baby['id'], role: _baby['role']),
       BabyProfileTab(
         baby: _baby,
         onUpdated: (updated) => setState(() => _baby = updated),

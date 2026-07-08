@@ -8,8 +8,9 @@ import 'event_details_fields.dart';
 
 class StatusTab extends StatefulWidget {
   final int babyId;
+  final String role;
 
-  const StatusTab({super.key, required this.babyId});
+  const StatusTab({super.key, required this.babyId, required this.role});
 
   @override
   State<StatusTab> createState() => _StatusTabState();
@@ -20,6 +21,8 @@ class _StatusTabState extends State<StatusTab> {
   bool _actionLoading = false;
   String? _error;
   Map<String, dynamic>? _status;
+
+  bool get _canEdit => widget.role == 'adm' || widget.role == 'tutor';
 
   @override
   void initState() {
@@ -271,42 +274,44 @@ class _StatusTabState extends State<StatusTab> {
             const SizedBox(height: AppSpacing.sp2),
             Text('há ${_formatDuration(awakeMinutes)}', style: AppTypography.displayLarge),
           ],
-          const SizedBox(height: AppSpacing.sp6),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _actionLoading
-                  ? null
-                  : () => _runAction(() => ApiService.startFeeding(widget.babyId)),
-              icon: const Text('🍼'),
-              label: const Text('Iniciar mamada'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.feedS,
-                foregroundColor: AppColors.feedT,
-                side: const BorderSide(color: AppColors.feedB, width: AppShapes.borderRegular),
-                minimumSize: const Size.fromHeight(52),
+          if (_canEdit) ...[
+            const SizedBox(height: AppSpacing.sp6),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _actionLoading
+                    ? null
+                    : () => _runAction(() => ApiService.startFeeding(widget.babyId)),
+                icon: const Text('🍼'),
+                label: const Text('Iniciar mamada'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.feedS,
+                  foregroundColor: AppColors.feedT,
+                  side: const BorderSide(color: AppColors.feedB, width: AppShapes.borderRegular),
+                  minimumSize: const Size.fromHeight(52),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sp3),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _actionLoading
-                  ? null
-                  : () => _runAction(() => ApiService.startNap(widget.babyId)),
-              icon: const Text('😴'),
-              label: const Text('Iniciar soneca'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.napS,
-                foregroundColor: AppColors.napT,
-                side: const BorderSide(color: AppColors.napB, width: AppShapes.borderRegular),
-                minimumSize: const Size.fromHeight(52),
+            const SizedBox(height: AppSpacing.sp3),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _actionLoading
+                    ? null
+                    : () => _runAction(() => ApiService.startNap(widget.babyId)),
+                icon: const Text('😴'),
+                label: const Text('Iniciar soneca'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.napS,
+                  foregroundColor: AppColors.napT,
+                  side: const BorderSide(color: AppColors.napB, width: AppShapes.borderRegular),
+                  minimumSize: const Size.fromHeight(52),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sp3),
-          _diaperButton(),
+            const SizedBox(height: AppSpacing.sp3),
+            _diaperButton(),
+          ],
         ],
       ),
     );
@@ -434,7 +439,7 @@ class _StatusTabState extends State<StatusTab> {
           Text('há ${_formatDuration(elapsedMinutes)}', style: AppTypography.displayLarge),
           const SizedBox(height: AppSpacing.sp2),
           GestureDetector(
-            onTap: _actionLoading ? null : onAdjustStartTime,
+            onTap: (_canEdit && !_actionLoading) ? onAdjustStartTime : null,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -445,8 +450,10 @@ class _StatusTabState extends State<StatusTab> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.edit_outlined, size: 16, color: AppColors.ink),
-                  const SizedBox(width: 6),
+                  if (_canEdit) ...[
+                    Icon(Icons.edit_outlined, size: 16, color: AppColors.ink),
+                    const SizedBox(width: 6),
+                  ],
                   Text('desde ${_formatClock(startedAt)}', style: AppTypography.bodyMedium.copyWith(color: AppColors.ink)),
                 ],
               ),
@@ -455,30 +462,35 @@ class _StatusTabState extends State<StatusTab> {
           const SizedBox(height: AppSpacing.sp6),
           SizedBox(
             width: double.infinity,
-            child: EventDetailsFields(
-              key: ValueKey('$eventType-$eventId'),
-              eventType: eventType,
-              values: detailsValues,
-              onChanged: (field, value) => _saveEventDetail(eventType, eventId, field, value),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sp6),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _actionLoading ? null : onAction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.successS,
-                foregroundColor: AppColors.successT,
-                side: const BorderSide(color: AppColors.successB, width: AppShapes.borderRegular),
-                minimumSize: const Size.fromHeight(52),
+            child: IgnorePointer(
+              ignoring: !_canEdit,
+              child: EventDetailsFields(
+                key: ValueKey('$eventType-$eventId'),
+                eventType: eventType,
+                values: detailsValues,
+                onChanged: (field, value) => _saveEventDetail(eventType, eventId, field, value),
               ),
-              child: _actionLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(actionLabel),
             ),
           ),
-          if (showDiaperButton) ...[
+          if (_canEdit) ...[
+            const SizedBox(height: AppSpacing.sp6),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _actionLoading ? null : onAction,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.successS,
+                  foregroundColor: AppColors.successT,
+                  side: const BorderSide(color: AppColors.successB, width: AppShapes.borderRegular),
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                child: _actionLoading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(actionLabel),
+              ),
+            ),
+          ],
+          if (showDiaperButton && _canEdit) ...[
             const SizedBox(height: AppSpacing.sp3),
             _diaperButton(),
           ],
