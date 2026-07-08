@@ -1,7 +1,8 @@
 from datetime import datetime, timezone, date
 from db.models.baby import Baby
+from db.models.baby_user import BabyUser
 from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository, baby_user_repository
-from app.services.authorization_service import require_role, ROLES_CAN_MANAGE_BABY
+from app.services.authorization_service import require_role, ROLES_CAN_MANAGE_BABY, ALL_ROLES
 
 
 def list_babies(user_id: int) -> list[Baby]:
@@ -30,6 +31,43 @@ def delete_baby(baby_id: int, user_id: int) -> None:
     require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
     baby = get_baby(baby_id, user_id)
     baby_repository.delete(baby)
+
+def list_baby_users(baby_id: int, user_id: int) -> list[BabyUser]:
+    require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
+    return baby_user_repository.list_by_baby(baby_id)
+
+def update_baby_user(baby_id: int, user_id: int, target_user_id: int, role: str | None, title: str | None) -> BabyUser:
+    require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
+
+    baby_user = baby_user_repository.find_by_baby_and_user(baby_id, target_user_id)
+    if not baby_user:
+        raise ValueError("baby_user_not_found")
+
+    if role is not None and role not in ALL_ROLES:
+        raise ValueError("invalid_role")
+
+    if role is not None and role != "adm" and baby_user.role == "adm" and _is_last_admin(baby_id, target_user_id):
+        raise ValueError("cannot_remove_last_admin")
+
+    if role is not None: baby_user.role = role
+    if title is not None: baby_user.title = title
+    return baby_user_repository.save(baby_user)
+
+def remove_baby_user(baby_id: int, user_id: int, target_user_id: int) -> None:
+    require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
+
+    baby_user = baby_user_repository.find_by_baby_and_user(baby_id, target_user_id)
+    if not baby_user:
+        raise ValueError("baby_user_not_found")
+
+    if baby_user.role == "adm" and _is_last_admin(baby_id, target_user_id):
+        raise ValueError("cannot_remove_last_admin")
+
+    baby_user_repository.delete(baby_user)
+
+def _is_last_admin(baby_id: int, target_user_id: int) -> bool:
+    admins = [bu for bu in baby_user_repository.list_by_baby(baby_id) if bu.role == "adm"]
+    return len(admins) == 1 and admins[0].user_id == target_user_id
 
 def get_status(baby_id: int, user_id: int) -> dict:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
