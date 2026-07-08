@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import or_
 from db.base import db
 from db.models.feeding import Feeding
-from db.models.baby import Baby
+from db.models.baby_user import BabyUser
 
 def find_overlapping(
     baby_id: int,
@@ -32,8 +32,8 @@ def find_open_by_baby(baby_id: int) -> Feeding | None:
 def find_by_id_and_user(feeding_id: int, user_id: int) -> Feeding | None:
     return db.session.execute(
         db.select(Feeding)
-        .join(Baby)
-        .where(Feeding.id == feeding_id, Baby.user_id == user_id)
+        .join(BabyUser, BabyUser.baby_id == Feeding.baby_id)
+        .where(Feeding.id == feeding_id, BabyUser.user_id == user_id)
     ).scalar_one_or_none()
 
 def list_by_baby(baby_id: int) -> list[Feeding]:

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from db.models.diaper import Diaper
 from app.repositories import diaper_repository, baby_repository, feeding_repository
+from app.services.authorization_service import require_role, ROLES_CAN_EDIT_ROUTINE
 
 def list_diapers(baby_id: int, user_id: int) -> list[Diaper]:
     baby = baby_repository.find_by_id_and_user(baby_id, user_id)
@@ -16,9 +17,7 @@ def register_diaper(
     consistency: str | None = None,
     note: str | None = None
 ) -> Diaper:
-    baby = baby_repository.find_by_id_and_user(baby_id, user_id)
-    if not baby:
-        raise ValueError("baby_not_found")
+    require_role(baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     # Troca de fralda é instantânea — sem conceito de "em andamento" e não
     # conflita com soneca (pode trocar com o bebê dormindo). Conflita com
@@ -46,6 +45,7 @@ def update_diaper(
     diaper = diaper_repository.find_by_id_and_user(diaper_id, user_id)
     if not diaper:
         raise ValueError("diaper_not_found")
+    require_role(diaper.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     if changed_at is not None: diaper.changed_at = changed_at
     if type is not None: diaper.type = type
@@ -57,4 +57,5 @@ def delete_diaper(diaper_id: int, user_id: int) -> None:
     diaper = diaper_repository.find_by_id_and_user(diaper_id, user_id)
     if not diaper:
         raise ValueError("diaper_not_found")
+    require_role(diaper.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
     diaper_repository.delete(diaper)

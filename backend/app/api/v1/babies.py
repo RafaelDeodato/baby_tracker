@@ -56,7 +56,9 @@ def update_baby(baby_id):
             birth_date=date.fromisoformat(data["birth_date"])
         )
         return jsonify(_serialize(baby)), 200
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra editar este bebê."}), 403
         return jsonify({"error": "baby_not_found", "message": "Bebê não encontrado."}), 404
 
 @babies_bp.delete("/<int:baby_id>")
@@ -66,7 +68,9 @@ def delete_baby(baby_id):
     try:
         baby_service.delete_baby(baby_id, user_id)
         return "", 204
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra excluir este bebê."}), 403
         return jsonify({"error": "baby_not_found", "message": "Bebê não encontrado."}), 404
 
 @babies_bp.get("/<int:baby_id>/status")

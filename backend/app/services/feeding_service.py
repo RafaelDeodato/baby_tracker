@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from db.models.feeding import Feeding
 from app.repositories import feeding_repository, nap_repository, baby_repository
+from app.services.authorization_service import require_role, ROLES_CAN_EDIT_ROUTINE
 
 FEEDING_WARNING_MINUTES = 180 # 3 horas
 
@@ -19,9 +20,7 @@ def start_feeding(
     volume_ml: int | None = None,
     note: str | None = None
 ) -> Feeding:
-    baby = baby_repository.find_by_id_and_user(baby_id, user_id)
-    if not baby:
-        raise ValueError("baby_not_found")
+    require_role(baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     if feeding_repository.find_open_by_baby(baby_id):
         raise ValueError("feeding_already_in_progress")
@@ -43,6 +42,7 @@ def finish_feeding(feeding_id: int, user_id: int, ended_at: datetime | None = No
     feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
     if not feeding:
         raise ValueError("feeding_not_found")
+    require_role(feeding.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     if feeding.ended_at is not None:
         raise ValueError("feeding_already_finished")
@@ -74,6 +74,7 @@ def update_feeding(
     feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
     if not feeding:
         raise ValueError("feeding_not_found")
+    require_role(feeding.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     new_started_at = started_at if started_at is not None else feeding.started_at
     new_ended_at = ended_at if ended_at is not None else feeding.ended_at
@@ -100,4 +101,5 @@ def delete_feeding(feeding_id: int, user_id: int) -> None:
     feeding = feeding_repository.find_by_id_and_user(feeding_id, user_id)
     if not feeding:
         raise ValueError("feeding_not_found")
+    require_role(feeding.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
     feeding_repository.delete(feeding)

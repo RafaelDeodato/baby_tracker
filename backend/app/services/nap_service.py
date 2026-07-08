@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from db.models.nap import Nap
 from app.repositories import nap_repository, feeding_repository, baby_repository
+from app.services.authorization_service import require_role, ROLES_CAN_EDIT_ROUTINE
 
 NAP_WARNING_MINUTES = 960  # 16 horas
 
@@ -19,9 +20,7 @@ def start_nap(
     white_noise: bool | None = None,
     note: str | None = None
 ) -> Nap:
-    baby = baby_repository.find_by_id_and_user(baby_id, user_id)
-    if not baby:
-        raise ValueError("baby_not_found")
+    require_role(baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     if nap_repository.find_open_by_baby(baby_id):
         raise ValueError("nap_already_in_progress")
@@ -43,6 +42,7 @@ def finish_nap(nap_id: int, user_id: int, ended_at: datetime | None = None) -> d
     nap = nap_repository.find_by_id_and_user(nap_id, user_id)
     if not nap:
         raise ValueError("nap_not_found")
+    require_role(nap.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     if nap.ended_at is not None:
         raise ValueError("nap_already_finished")
@@ -74,6 +74,7 @@ def update_nap(
     nap = nap_repository.find_by_id_and_user(nap_id, user_id)
     if not nap:
         raise ValueError("nap_not_found")
+    require_role(nap.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
 
     new_started_at = started_at if started_at is not None else nap.started_at
     new_ended_at = ended_at if ended_at is not None else nap.ended_at
@@ -98,4 +99,5 @@ def delete_nap(nap_id: int, user_id: int) -> None:
     nap = nap_repository.find_by_id_and_user(nap_id, user_id)
     if not nap:
         raise ValueError("nap_not_found")
+    require_role(nap.baby_id, user_id, ROLES_CAN_EDIT_ROUTINE)
     nap_repository.delete(nap)

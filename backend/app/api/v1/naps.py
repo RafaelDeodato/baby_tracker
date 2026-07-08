@@ -53,6 +53,8 @@ def start_nap(baby_id):
             return jsonify({"error": error, "message": "Já existe uma soneca em andamento."}), 409
         if error == "feeding_in_progress":
             return jsonify({"error": error, "message": "Existe uma mamada em andamento. Finalize-a antes de iniciar uma soneca."}), 409
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra registrar soneca para este bebê."}), 403
 
 @naps_bp.post("/naps/<int:nap_id>/finish")
 @jwt_required()
@@ -71,6 +73,8 @@ def finish_nap(nap_id):
             return jsonify({"error": error, "message": "Esta soneca já foi finalizada."}), 409
         if error == "invalid_end_time":
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra finalizar esta soneca."}), 403
 
 @naps_bp.put("/naps/<int:nap_id>")
 @jwt_required()
@@ -94,6 +98,8 @@ def update_nap(nap_id):
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
         if error == "overlaps_existing_event":
             return jsonify({"error": error, "message": "O novo horário conflita com outro evento já registrado."}), 409
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra editar esta soneca."}), 403
 
 @naps_bp.delete("/naps/<int:nap_id>")
 @jwt_required()
@@ -102,5 +108,7 @@ def delete_nap(nap_id):
     try:
         nap_service.delete_nap(nap_id, user_id)
         return "", 204
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra excluir esta soneca."}), 403
         return jsonify({"error": "nap_not_found", "message": "Soneca não encontrada."}), 404

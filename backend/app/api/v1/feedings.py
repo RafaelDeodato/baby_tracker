@@ -53,6 +53,8 @@ def start_feeding(baby_id):
             return jsonify({"error": error, "message": "Já existe uma mamada em andamento."}), 409
         if error == "nap_in_progress":
             return jsonify({"error": error, "message": "Existe uma soneca em andamento. Finalize-a antes de iniciar uma mamada."}), 409
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra registrar mamada para este bebê."}), 403
 
 @feedings_bp.post("/feedings/<int:feeding_id>/finish")
 @jwt_required()
@@ -71,6 +73,8 @@ def finish_feeding(feeding_id):
             return jsonify({"error": error, "message": "Esta mamada já foi finalizada."}), 409
         if error == "invalid_end_time":
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra finalizar esta mamada."}), 403
 
 @feedings_bp.put("/feedings/<int:feeding_id>")
 @jwt_required()
@@ -94,6 +98,8 @@ def update_feeding(feeding_id):
             return jsonify({"error": error, "message": "O horário de término deve ser maior que o de início."}), 422
         if error == "overlaps_existing_event":
             return jsonify({"error": error, "message": "O novo horário conflita com outro evento já registrado."}), 409
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra editar esta mamada."}), 403
 
 @feedings_bp.delete("/feedings/<int:feeding_id>")
 @jwt_required()
@@ -102,5 +108,7 @@ def delete_feeding(feeding_id):
     try:
         feeding_service.delete_feeding(feeding_id, user_id)
         return "", 204
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra excluir esta mamada."}), 403
         return jsonify({"error": "feeding_not_found", "message": "Mamada não encontrada."}), 404

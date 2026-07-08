@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, date
 from db.models.baby import Baby
-from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository
+from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository, baby_user_repository
+from app.services.authorization_service import require_role, ROLES_CAN_MANAGE_BABY
 
 
 def list_babies(user_id: int) -> list[Baby]:
@@ -13,16 +14,20 @@ def get_baby(baby_id: int, user_id: int) -> Baby:
     return baby
 
 def create_baby(user_id: int, name: str, birth_date: date) -> Baby:
-    baby = Baby(user_id=user_id, name=name, birth_date=birth_date)
-    return baby_repository.save(baby)
+    baby = Baby(name=name, birth_date=birth_date)
+    baby = baby_repository.save(baby)
+    baby_user_repository.add(baby_id=baby.id, user_id=user_id, role="adm")
+    return baby
 
 def update_baby(baby_id: int, user_id: int, name: str, birth_date: date) -> Baby:
+    require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
     baby = get_baby(baby_id, user_id)
     baby.name = name
     baby.birth_date = birth_date
     return baby_repository.save(baby)
 
 def delete_baby(baby_id: int, user_id: int) -> None:
+    require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
     baby = get_baby(baby_id, user_id)
     baby_repository.delete(baby)
 

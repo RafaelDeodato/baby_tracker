@@ -44,6 +44,8 @@ def register_diaper(baby_id):
             return jsonify({"error": error, "message": "Bebê não encontrado."}), 404
         if error == "feeding_in_progress":
             return jsonify({"error": error, "message": "Existe uma mamada em andamento. Finalize-a antes de registrar a troca de fralda."}), 409
+        if error == "forbidden":
+            return jsonify({"error": error, "message": "Você não tem permissão pra registrar troca de fralda para este bebê."}), 403
 
 @diapers_bp.put("/diapers/<int:diaper_id>")
 @jwt_required()
@@ -57,7 +59,9 @@ def update_diaper(diaper_id):
             type=data.get("type"), consistency=data.get("consistency"), note=data.get("note")
         )
         return jsonify(_serialize(diaper)), 200
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra editar este registro de fralda."}), 403
         return jsonify({"error": "diaper_not_found", "message": "Registro de fralda não encontrado."}), 404
 
 @diapers_bp.delete("/diapers/<int:diaper_id>")
@@ -67,5 +71,7 @@ def delete_diaper(diaper_id):
     try:
         diaper_service.delete_diaper(diaper_id, user_id)
         return "", 204
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "forbidden":
+            return jsonify({"error": "forbidden", "message": "Você não tem permissão pra excluir este registro de fralda."}), 403
         return jsonify({"error": "diaper_not_found", "message": "Registro de fralda não encontrado."}), 404
