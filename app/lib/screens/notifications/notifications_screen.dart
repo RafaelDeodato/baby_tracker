@@ -99,6 +99,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'baby_invite_declined':
         final invited = invite?['invited_user']?['name'] ?? 'A pessoa';
         return '$invited recusou seu convite pra $babyName.';
+      case 'baby_access_updated':
+        final access = notification['access'];
+        final accessBabyName = access?['baby']?['name'] ?? 'um bebê';
+        final accessRole = _roleLabels[access?['role']] ?? access?['role'] ?? '';
+        return 'Seu acesso a $accessBabyName agora é $accessRole.';
       default:
         return 'Notificação.';
     }
@@ -112,16 +117,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text(_error!))
-              : _notifications.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Nenhuma notificação por aqui.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.inkSoft),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _fetchNotifications,
-                      child: ListView.separated(
+              : RefreshIndicator(
+                  onRefresh: _fetchNotifications,
+                  child: _notifications.isEmpty
+                      ? LayoutBuilder(
+                          builder: (context, constraints) => SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                              child: Center(
+                                child: Text(
+                                  'Nenhuma notificação por aqui.',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.inkSoft),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
                         padding: const EdgeInsets.all(AppSpacing.sp4),
                         itemCount: _notifications.length,
                         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sp3),
@@ -173,6 +186,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                             style: OutlinedButton.styleFrom(
                                               foregroundColor: AppColors.dangerT,
                                               side: const BorderSide(color: AppColors.dangerB),
+                                              minimumSize: const Size.fromHeight(44),
                                             ),
                                             child: const Text('Recusar'),
                                           ),
@@ -185,6 +199,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                               backgroundColor: AppColors.successS,
                                               foregroundColor: AppColors.successT,
                                               side: const BorderSide(color: AppColors.successB),
+                                              minimumSize: const Size.fromHeight(44),
                                             ),
                                             child: resolving
                                                 ? const SizedBox(
