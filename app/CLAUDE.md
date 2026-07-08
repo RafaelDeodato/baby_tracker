@@ -46,9 +46,16 @@ Regra de ouro do style guide: cores pastel são fundo, nunca texto.
 * Refresh de token é automático e transparente dentro de `_request`: um
   `401` dispara `_refreshToken()` e reexecuta a chamada original uma vez
   (`isRetry`). Não duplicar essa lógica em outros lugares.
-* `_baseUrl` aponta para `localhost` — ao introduzir ambientes
-  (dev/staging/prod), externalizar via `--dart-define` ou arquivo de
-  config, não deixar hardcoded.
+* `_baseUrl` é configurável via `--dart-define=API_BASE_URL=...`, lido
+  com `String.fromEnvironment` — escolhido em vez de arquivo de config
+  por ambiente porque não exige nenhuma dependência nova nem lógica de
+  carregar/parsear arquivo em runtime, e o projeto já não usa nenhum
+  gerenciador de estado/injeção de config. Sem o define, cai no IP local
+  de dev (hardcoded como `defaultValue`), então `flutter run` sem flags
+  extras continua funcionando igual hoje. Pra build de produção:
+  `flutter build <alvo> --dart-define=API_BASE_URL=https://SEU-SERVICO.run.app/api/v1`
+  (URL real do Cloud Run ainda não existe — preencher quando o deploy do
+  backend acontecer).
 
 ## `StorageService`
 

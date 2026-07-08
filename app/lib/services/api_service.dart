@@ -4,7 +4,14 @@ import 'storage_service.dart';
 import 'navigation_service.dart';
 
 class ApiService {
-  static const _baseUrl = 'http://192.168.10.102:5000/api/v1';
+  // Configurável por ambiente via --dart-define=API_BASE_URL=... (ver
+  // app/CLAUDE.md, seção "ApiService"). Sem o define, cai no IP local de
+  // dev abaixo — então `flutter run` continua funcionando sem flags
+  // extras no dia a dia.
+  static const _baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://192.168.10.102:5000/api/v1',
+  );
 
   // ── Helper principal ──────────────────────────────
   static Future<http.Response> _request(
