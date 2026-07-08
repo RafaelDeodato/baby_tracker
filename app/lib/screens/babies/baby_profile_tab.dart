@@ -26,8 +26,9 @@ class _BabyProfileTabState extends State<BabyProfileTab> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
-  Future<void> _editBaby() {
-    return showBabyFormDialog(
+  Future<void> _editBaby() async {
+    Map<String, dynamic>? updated;
+    await showBabyFormDialog(
       context,
       title: 'Editar bebê',
       initialName: _baby['name'],
@@ -35,13 +36,19 @@ class _BabyProfileTabState extends State<BabyProfileTab> {
       onSubmit: (name, birthDate) async {
         final result = await ApiService.updateBaby(_baby['id'], name, birthDate);
         if (result['status'] == 200) {
-          setState(() => _baby = result['data']);
-          widget.onUpdated(result['data']);
+          updated = result['data'];
           return true;
         }
         return false;
       },
     );
+    // Só mexe no estado depois que o dialog já fechou de vez — ver
+    // manage_access_screen.dart pra mais contexto sobre o crash que
+    // esse padrão evita.
+    if (updated != null) {
+      setState(() => _baby = updated!);
+      widget.onUpdated(updated!);
+    }
   }
 
   Future<void> _confirmDelete() async {

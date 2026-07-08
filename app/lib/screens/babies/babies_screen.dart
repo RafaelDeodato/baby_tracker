@@ -42,19 +42,20 @@ class _BabiesScreenState extends State<BabiesScreen> {
     }
   }
 
-  Future<void> _showAddBabyDialog() {
-    return showBabyFormDialog(
+  Future<void> _showAddBabyDialog() async {
+    await showBabyFormDialog(
       context,
       title: 'Novo bebê',
       onSubmit: (name, birthDate) async {
         final result = await ApiService.createBaby(name, birthDate);
-        if (result['status'] == 201) {
-          await _fetchBabies();
-          return true;
-        }
-        return false;
+        return result['status'] == 201;
       },
     );
+    // Espera o dialog fechar (e a animação de saída assentar) antes de
+    // buscar a lista de novo — atualizar o estado no meio da transição
+    // de fechamento pode derrubar campos do dialog com "controller
+    // usado após dispose".
+    _fetchBabies();
   }
 
   @override
