@@ -397,9 +397,22 @@ class _HistoryTabState extends State<HistoryTab> {
     );
   }
 
+  /// Frase curta indicando o que falta preencher — só faz sentido mostrar
+  /// pra quem pode tocar no card pra completar (visualizador não tem essa
+  /// ação, então o destaque de cor já basta pra ele).
+  String? _incompleteHint(Map<String, dynamic> event) {
+    if (!_canEdit || !_isIncomplete(event)) return null;
+    return switch (event['type']) {
+      'feeding' => 'Toque para informar o tipo da mamada',
+      'nap' => 'Toque para informar o local do sono',
+      _ => 'Toque para informar o tipo da troca',
+    };
+  }
+
   Widget _buildCardContent(Map<String, dynamic> event) {
     final isDiaper = event['type'] == 'diaper';
     final inProgress = !isDiaper && event['ended_at'] == null;
+    final incompleteHint = _incompleteHint(event);
 
     return Row(
       children: [
@@ -421,6 +434,8 @@ class _HistoryTabState extends State<HistoryTab> {
                         : '${_formatClock(event['started_at'])} – ${_formatClock(event['ended_at'])}'),
                 style: AppTypography.bodyMedium,
               ),
+              if (incompleteHint != null)
+                Text(incompleteHint, style: AppTypography.labelSmall.copyWith(color: AppColors.warnT)),
             ],
           ),
         ),
