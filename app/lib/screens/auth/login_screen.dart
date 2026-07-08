@@ -15,14 +15,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController    = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   String? _error;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   setState(() { _loading = true; _error = null; });
   try {
     final result = await ApiService.login(
-      _emailController.text.trim(),
+      _identifierController.text.trim(),
       _passwordController.text,
     );
     if (result['status'] == 200) {
@@ -83,9 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sp4),
                     TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'E-mail'),
+                      controller: _identifierController,
+                      decoration: const InputDecoration(labelText: 'Usuário ou e-mail'),
                     ),
                     const SizedBox(height: AppSpacing.sp4),
                     TextField(

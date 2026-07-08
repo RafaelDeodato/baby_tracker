@@ -14,6 +14,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController     = TextEditingController();
   final _emailController    = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   String? _error;
@@ -22,6 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -32,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final result = await ApiService.register(
         _nameController.text.trim(),
         _emailController.text.trim(),
+        _usernameController.text.trim(),
         _passwordController.text,
       );
       if (result['status'] == 201) {
@@ -88,6 +91,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(labelText: 'E-mail'),
+                    ),
+                    const SizedBox(height: AppSpacing.sp4),
+                    TextField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(labelText: 'Nome de usuário', prefixText: '@'),
                     ),
                     const SizedBox(height: AppSpacing.sp4),
                     TextField(
