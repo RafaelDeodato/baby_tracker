@@ -35,10 +35,10 @@ mas avaliado como necessário antes de considerar o V1 pronto — detalhado em
 `ON DELETE CASCADE` em `feedings`/`naps`, `PUT` de edição de eventos com
 validação de sobreposição, sessão persistente.
 
-### V2 — Fraldas + compartilhamento entre usuários ⏳ *em andamento*
+### V2 — Fraldas + compartilhamento entre usuários ✅ *fechado*
 
 * ✅ Registro de troca de fraldas
-* ⏳ Compartilhamento de bebês entre usuários: relação bebê↔usuário passa a
+* ✅ Compartilhamento de bebês entre usuários: relação bebê↔usuário passa a
   ser N:N. Convite feito por **`@username`** (campo único por usuário,
   busca por correspondência exata — sem busca parcial/prefixo, pra não
   virar um diretório de pessoas). Quem recebe o convite aceita ou recusa
@@ -53,7 +53,7 @@ validação de sobreposição, sessão persistente.
   compartilhada não se encaixam bem numa unidade rígida). Nível
   "profissional" ainda **não** aparece nesta versão — ver ideia adiada
   abaixo. Público desta versão: coparentais, avós, cuidadores familiares
-* ⏳ **Notificações internas (inbox, não push)**: infraestrutura genérica
+* ✅ **Notificações internas (inbox, não push)**: infraestrutura genérica
   de notificações dentro do app, motivada pelo fluxo de convite mas
   desenhada pra ser reaproveitada por qualquer aviso futuro (ver nota na
   V3.4, que já nasce parcialmente resolvida por conta disso)
