@@ -270,17 +270,6 @@ class _HistoryTabState extends State<HistoryTab> {
       final headerColor = segmentColors[globalIndex];
       final firstDay = DateTime.parse(group.first['started_at']).toLocal();
 
-      slivers.add(
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _StickyDateHeaderDelegate(
-            label: _dateLabel(firstDay),
-            lineColor: headerColor,
-            railWidth: _railWidth,
-          ),
-        ),
-      );
-
       final rows = <Widget>[];
       for (final event in group) {
         final topColor = segmentColors[globalIndex];
@@ -288,7 +277,27 @@ class _HistoryTabState extends State<HistoryTab> {
         rows.add(_buildTimelineRow(event, topColor, bottomColor));
         globalIndex++;
       }
-      slivers.add(SliverList(delegate: SliverChildListDelegate(rows)));
+
+      // Cada dia vira seu próprio SliverMainAxisGroup — sem isso, vários
+      // SliverPersistentHeader(pinned: true) em sequência se empilham uns
+      // sobre os outros ao rolar, em vez do próximo empurrar o anterior
+      // pra fora (limitação conhecida de pinned headers soltos no
+      // CustomScrollView).
+      slivers.add(
+        SliverMainAxisGroup(
+          slivers: [
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyDateHeaderDelegate(
+                label: _dateLabel(firstDay),
+                lineColor: headerColor,
+                railWidth: _railWidth,
+              ),
+            ),
+            SliverList(delegate: SliverChildListDelegate(rows)),
+          ],
+        ),
+      );
     }
 
     slivers.add(const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sp4)));
