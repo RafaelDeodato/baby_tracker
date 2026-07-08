@@ -250,4 +250,67 @@ class ApiService {
     final res = await _request('DELETE', '/diapers/$diaperId');
     return res.statusCode;
   }
+
+  // ── Usuários ──────────────────────────────────────
+  static Future<Map<String, dynamic>> searchUser(String username) async {
+    final res = await _request('GET', '/users/search?username=${Uri.encodeQueryComponent(username)}');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  // ── Convites ──────────────────────────────────────
+  static Future<Map<String, dynamic>> createInvite(int babyId, String username, String role, {String? title}) async {
+    final body = <String, dynamic>{
+      'username': username,
+      'role': role,
+      'title': ?title,
+    };
+    final res = await _request('POST', '/babies/$babyId/invites', body: body);
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> getMyInvites() async {
+    final res = await _request('GET', '/invites');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> acceptInvite(int inviteId) async {
+    final res = await _request('POST', '/invites/$inviteId/accept');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> declineInvite(int inviteId) async {
+    final res = await _request('POST', '/invites/$inviteId/decline');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  // ── Acesso ao bebê ────────────────────────────────
+  static Future<Map<String, dynamic>> getBabyUsers(int babyId) async {
+    final res = await _request('GET', '/babies/$babyId/users');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<Map<String, dynamic>> updateBabyUser(int babyId, int userId, {String? role, String? title}) async {
+    final body = <String, dynamic>{
+      'role': ?role,
+      'title': ?title,
+    };
+    final res = await _request('PUT', '/babies/$babyId/users/$userId', body: body);
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> removeBabyUser(int babyId, int userId) async {
+    final res = await _request('DELETE', '/babies/$babyId/users/$userId');
+    return res.statusCode;
+  }
+
+  // ── Notificações ──────────────────────────────────
+  static Future<Map<String, dynamic>> getNotifications() async {
+    final res = await _request('GET', '/notifications');
+    return {'status': res.statusCode, 'data': jsonDecode(res.body)};
+  }
+
+  static Future<int> markNotificationRead(int notificationId) async {
+    final res = await _request('POST', '/notifications/$notificationId/read');
+    return res.statusCode;
+  }
 }

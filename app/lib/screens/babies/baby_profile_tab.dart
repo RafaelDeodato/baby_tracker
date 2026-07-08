@@ -5,6 +5,7 @@ import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../services/api_service.dart';
 import 'baby_form_dialog.dart';
+import 'manage_access_screen.dart';
 
 class BabyProfileTab extends StatefulWidget {
   final Map<String, dynamic> baby;
@@ -83,6 +84,7 @@ class _BabyProfileTabState extends State<BabyProfileTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = _baby['role'] == 'adm';
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.sp4),
@@ -106,6 +108,28 @@ class _BabyProfileTabState extends State<BabyProfileTab> {
                   'Nascimento: ${_formatDate(_baby['birth_date'])}',
                   style: AppTypography.bodyMedium,
                 ),
+                if (isAdmin) ...[
+                  const SizedBox(height: AppSpacing.sp6),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ManageAccessScreen(babyId: _baby['id'], babyName: _baby['name']),
+                        ),
+                      ),
+                      icon: const Icon(Icons.people_outline),
+                      label: const Text('Gerenciar acesso'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryT,
+                        side: const BorderSide(color: AppColors.primaryB, width: AppShapes.borderRegular),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppShapes.radiusMedium)),
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sp8),
                 SizedBox(
                   width: double.infinity,
