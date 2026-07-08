@@ -383,7 +383,7 @@ class _HistoryTabState extends State<HistoryTab> {
                   margin: const EdgeInsets.only(bottom: AppSpacing.sp3),
                   padding: const EdgeInsets.all(AppSpacing.sp4),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: incomplete ? AppColors.warnS : AppColors.surface,
                     borderRadius: BorderRadius.circular(AppShapes.radiusLarge),
                     border: Border.all(color: familyBorder, width: AppShapes.borderRegular),
                   ),
