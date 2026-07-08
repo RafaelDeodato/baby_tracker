@@ -11,7 +11,12 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, origins=Config.CORS_ALLOWED_ORIGINS)
+    # TEMPORARIAMENTE sem restrição (CORS(app) em vez de origins=
+    # Config.CORS_ALLOWED_ORIGINS) pra permitir testar o app como PWA, que
+    # roda de origens variáveis durante o desenvolvimento. Ver nota em
+    # docs/v2-compartilhamento-e-seguranca.md ("CORS restrito") — reativar
+    # a restrição assim que o teste como PWA não for mais necessário.
+    CORS(app)
     db.init_app(app)
     jwt = JWTManager(app)
     limiter.init_app(app)

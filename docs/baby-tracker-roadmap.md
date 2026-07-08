@@ -64,7 +64,9 @@ validação de sobreposição, sessão persistente.
   instância do Cloud Run reiniciasse; rate limiting (Flask-Limiter) nos
   endpoints de autenticação; CORS restrito por variável de ambiente (nega
   todas as origens de navegador por padrão, até existir um cliente web
-  real). Detalhes em `baby-tracker-auditoria-seguranca.md`.
+  real) — **temporariamente desativado pra testes como PWA, ver nota em
+  `v2-compartilhamento-e-seguranca.md`**. Detalhes em
+  `baby-tracker-auditoria-seguranca.md`.
 * ❌ **Verificação de e-mail por token — decisão explícita de adiar**,
   não esquecimento: só faz sentido quando o cadastro deixar de ser
   restrito à família (exige e-mail transacional de verdade, ex: Resend —

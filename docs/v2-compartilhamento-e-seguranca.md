@@ -251,6 +251,14 @@ vírgula) substitui `CORS(app)` sem restrição. Vazio por padrão — nega
 CORS pra qualquer origem de navegador até existir um cliente web real
 (o app mobile não é afetado por CORS).
 
+> ⚠️ **Temporariamente desativado (2026-07-08).** `app/__init__.py` está
+> usando `CORS(app)` sem restrição de novo — precisa testar o app como
+> PWA, que roda de origens variáveis durante o desenvolvimento, e a
+> lista fixa de `CORS_ALLOWED_ORIGINS` atrapalha isso. Reativar a
+> restrição (voltar pra `CORS(app, origins=Config.CORS_ALLOWED_ORIGINS)`)
+> assim que o teste como PWA não for mais necessário — não deixar essa
+> config solta em produção.
+
 ## Ideias registradas para versões futuras (não implementar agora)
 
 ### Perfil profissional com título pré-definido
