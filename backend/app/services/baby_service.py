@@ -3,6 +3,7 @@ from db.models.baby import Baby
 from db.models.baby_user import BabyUser
 from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository, baby_user_repository
 from app.services.authorization_service import require_role, ROLES_CAN_MANAGE_BABY, ALL_ROLES
+from app.services import notification_service
 
 
 def list_babies(user_id: int) -> list[Baby]:
@@ -49,9 +50,16 @@ def update_baby_user(baby_id: int, user_id: int, target_user_id: int, role: str 
     if role is not None and role != "adm" and baby_user.role == "adm" and _is_last_admin(baby_id, target_user_id):
         raise ValueError("cannot_remove_last_admin")
 
+    role_changed = role is not None and role != baby_user.role
+
     if role is not None: baby_user.role = role
     if title is not None: baby_user.title = title
-    return baby_user_repository.save(baby_user)
+    baby_user = baby_user_repository.save(baby_user)
+
+    if role_changed:
+        notification_service.notify(user_id=target_user_id, type="baby_access_updated", reference_id=baby_id)
+
+    return baby_user
 
 def remove_baby_user(baby_id: int, user_id: int, target_user_id: int) -> None:
     require_role(baby_id, user_id, ROLES_CAN_MANAGE_BABY)
