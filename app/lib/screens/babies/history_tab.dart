@@ -413,6 +413,7 @@ class _HistoryTabState extends State<HistoryTab> {
     final isDiaper = event['type'] == 'diaper';
     final inProgress = !isDiaper && event['ended_at'] == null;
     final incompleteHint = _incompleteHint(event);
+    final typeLabel = switch (event['type']) { 'feeding' => 'Mamada', 'nap' => 'Soneca', _ => 'Troca de fralda' };
 
     return Row(
       children: [
@@ -422,8 +423,8 @@ class _HistoryTabState extends State<HistoryTab> {
             children: [
               Text(
                 isDiaper
-                    ? 'Troca de fralda'
-                    : (inProgress ? 'Em andamento' : _formatDuration(event['duration_minutes'])),
+                    ? typeLabel
+                    : '$typeLabel – ${inProgress ? 'Em andamento' : _formatDuration(event['duration_minutes'])}',
                 style: AppTypography.titleMedium,
               ),
               Text(
