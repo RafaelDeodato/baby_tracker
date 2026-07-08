@@ -6,9 +6,12 @@ from db.models.user import User
 from app.repositories import user_repository, revoked_token_repository
 from core.security import hash_password, verify_password, is_password_strong
 
-def register(name: str, email: str, password: str) -> User:
+def register(name: str, email: str, username: str, password: str) -> User:
     if user_repository.find_by_email(email):
         raise ValueError("email_already_registered")
+
+    if user_repository.find_by_username(username):
+        raise ValueError("username_already_registered")
 
     if not is_password_strong(password):
         raise ValueError("weak_password")
@@ -16,12 +19,13 @@ def register(name: str, email: str, password: str) -> User:
     user = User(
         name=name,
         email=email,
+        username=username,
         password_hash=hash_password(password)
     )
     return user_repository.save(user)
 
-def login(email: str, password: str) -> dict:
-    user = user_repository.find_by_email(email)
+def login(identifier: str, password: str) -> dict:
+    user = user_repository.find_by_username(identifier) or user_repository.find_by_email(identifier)
 
     if not user or not verify_password(password, user.password_hash):
         raise ValueError("invalid_credentials")

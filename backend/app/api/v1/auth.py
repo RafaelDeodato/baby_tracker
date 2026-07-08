@@ -14,13 +14,16 @@ def register():
         user = auth_service.register(
             name=data["name"],
             email=data["email"],
+            username=data["username"],
             password=data["password"]
         )
-        return jsonify({"id": user.id, "name": user.name, "email": user.email}), 201
+        return jsonify({"id": user.id, "name": user.name, "email": user.email, "username": user.username}), 201
     except ValueError as e:
         error = str(e)
         if error == "email_already_registered":
             return jsonify({"error": error, "message": "E-mail já cadastrado."}), 409
+        if error == "username_already_registered":
+            return jsonify({"error": error, "message": "Nome de usuário já cadastrado."}), 409
         if error == "weak_password":
             return jsonify({
                 "error": error,
@@ -33,19 +36,19 @@ def login():
     data = request.get_json()
     try:
         tokens = auth_service.login(
-            email=data["email"],
+            identifier=data["identifier"],
             password=data["password"]
         )
         return jsonify(tokens), 200
     except ValueError:
-        return jsonify({"error": "invalid_credentials", "message": "E-mail ou senha inválidos."}), 401
+        return jsonify({"error": "invalid_credentials", "message": "Usuário/e-mail ou senha inválidos."}), 401
 
 @auth_bp.get("/me")
 @jwt_required()
 def me():
     user_id = int(get_jwt_identity())
     user = auth_service.get_current_user(user_id)
-    return jsonify({"id": user.id, "name": user.name, "email": user.email}), 200
+    return jsonify({"id": user.id, "name": user.name, "email": user.email, "username": user.username}), 200
 
 @auth_bp.post("/refresh")
 @jwt_required(refresh=True)
