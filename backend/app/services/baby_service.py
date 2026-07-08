@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, date
 from db.models.baby import Baby
 from db.models.baby_user import BabyUser
-from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository, baby_user_repository
+from app.repositories import baby_repository, feeding_repository, nap_repository, diaper_repository, baby_user_repository, baby_access_event_repository
 from app.services.authorization_service import require_role, ROLES_CAN_MANAGE_BABY, ALL_ROLES
 from app.services import notification_service
 
@@ -57,7 +57,11 @@ def update_baby_user(baby_id: int, user_id: int, target_user_id: int, role: str 
     baby_user = baby_user_repository.save(baby_user)
 
     if role_changed:
-        notification_service.notify(user_id=target_user_id, type="baby_access_updated", reference_id=baby_id)
+        event = baby_access_event_repository.create(
+            baby_id=baby_id, user_id=target_user_id, changed_by_id=user_id,
+            role=baby_user.role, title=baby_user.title
+        )
+        notification_service.notify(user_id=target_user_id, type="baby_access_updated", reference_id=event.id)
 
     return baby_user
 

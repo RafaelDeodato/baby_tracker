@@ -7,3 +7,4 @@ from db.models.revoked_token import RevokedToken
 from db.models.baby_user import BabyUser
 from db.models.baby_invite import BabyInvite
 from db.models.notification import Notification
+from db.models.baby_access_event import BabyAccessEvent

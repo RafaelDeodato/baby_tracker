@@ -1,5 +1,5 @@
 from db.models.notification import Notification
-from app.repositories import notification_repository, baby_invite_repository, baby_repository, baby_user_repository
+from app.repositories import notification_repository, baby_invite_repository, baby_repository, baby_access_event_repository
 
 def notify(user_id: int, type: str, reference_id: int | None = None) -> Notification:
     return notification_repository.create(user_id=user_id, type=type, reference_id=reference_id)
@@ -40,13 +40,13 @@ def _enrich(notification: Notification) -> dict:
             }
 
     if notification.type == "baby_access_updated" and notification.reference_id:
-        baby = baby_repository.find_by_id(notification.reference_id)
-        baby_user = baby_user_repository.find_by_baby_and_user(notification.reference_id, notification.user_id)
-        if baby and baby_user:
+        event = baby_access_event_repository.find_by_id(notification.reference_id)
+        if event:
+            baby = baby_repository.find_by_id(event.baby_id)
             data["access"] = {
-                "baby": {"id": baby.id, "name": baby.name},
-                "role": baby_user.role,
-                "title": baby_user.title,
+                "baby": {"id": baby.id, "name": baby.name} if baby else None,
+                "role": event.role,
+                "title": event.title,
             }
 
     return data
