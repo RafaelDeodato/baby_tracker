@@ -1,5 +1,7 @@
 from app.repositories import baby_user_repository
 
+ALL_ROLES = {"adm", "tutor", "visualizador"}
+
 # Papéis que podem escrever na rotina (mamada/soneca/fralda) de um bebê.
 # 'visualizador' fica de fora — só leitura.
 ROLES_CAN_EDIT_ROUTINE = {"adm", "tutor"}

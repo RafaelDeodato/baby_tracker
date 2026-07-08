@@ -13,3 +13,4 @@ class BabyUser(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     baby = db.relationship("Baby", back_populates="baby_users")
+    user = db.relationship("User")

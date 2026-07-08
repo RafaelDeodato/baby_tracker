@@ -13,3 +13,7 @@ class BabyInvite(db.Model):
     status = db.Column(db.String, nullable=False, default="pending")  # 'pending' | 'accepted' | 'declined'
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     resolved_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    baby = db.relationship("Baby")
+    invited_user = db.relationship("User", foreign_keys=[invited_user_id])
+    invited_by = db.relationship("User", foreign_keys=[invited_by_id])

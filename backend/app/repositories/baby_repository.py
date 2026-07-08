@@ -2,6 +2,9 @@ from db.base import db
 from db.models.baby import Baby
 from db.models.baby_user import BabyUser
 
+def find_by_id(baby_id: int) -> Baby | None:
+    return db.session.get(Baby, baby_id)
+
 def find_by_id_and_user(baby_id: int, user_id: int) -> Baby | None:
     return db.session.execute(
         db.select(Baby)
