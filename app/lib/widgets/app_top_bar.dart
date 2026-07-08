@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../screens/profile/profile_screen.dart';
+import 'notification_bell.dart';
 
 /// Barra superior padrão do app: título sempre centralizado, seta de
 /// voltar automática (o Flutter já mostra sozinho quando a tela pode
-/// voltar) e ícone de perfil à direita, pra acesso rápido de qualquer
-/// tela. Usado em todas as telas depois do login — as telas de
-/// autenticação (login/registro) têm layout próprio, sem barra.
+/// voltar), sino de notificações e ícone de perfil à direita, pra
+/// acesso rápido de qualquer tela. Usado em todas as telas depois do
+/// login — as telas de autenticação (login/registro) têm layout
+/// próprio, sem barra.
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final bool showProfileAction;
@@ -21,6 +23,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       actions: showProfileAction
           ? [
+              const NotificationBell(),
               IconButton(
                 icon: const Icon(Icons.person_outline),
                 onPressed: () => Navigator.push(
