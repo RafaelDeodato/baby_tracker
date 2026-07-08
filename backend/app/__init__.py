@@ -34,6 +34,18 @@ def create_app():
             "message": "Muitas tentativas. Aguarde um minuto e tente novamente."
         }), 429
 
+    # Sem isso, uma exceção não tratada vaza a página de erro HTML padrão
+    # do Flask/Werkzeug em produção, quebrando o contrato JSON do resto da
+    # API. Só entra em ação com DEBUG=False — com DEBUG=True o Flask
+    # propaga a exceção pro debugger interativo do Werkzeug de propósito,
+    # e não passa por aqui (comportamento padrão, não alterado).
+    @app.errorhandler(500)
+    def internal_error_handler(e):
+        return jsonify({
+            "error": "internal_server_error",
+            "message": "Erro interno do servidor. Tente novamente em instantes."
+        }), 500
+
     app.register_blueprint(v1_bp, url_prefix="/api/v1")
 
     @app.route("/health")

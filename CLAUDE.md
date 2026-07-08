@@ -52,6 +52,18 @@ ser implementada.
 * O backend nunca conhece detalhes de apresentação; ele é desacoplado de
   qualquer client específico.
 
+## Fluxo de branches
+
+* `master` é a branch de produção — só recebe merge de código pronto pra
+  deploy, nunca commit direto.
+* `dev` é a branch de trabalho — todo desenvolvimento ativo acontece aqui
+  (ou em branches de feature nascidas dela, ver abaixo). `dev` é quem
+  eventualmente vira `master` via merge, quando o estado atual estiver
+  pronto pra produção.
+* Branches de feature específicas, quando precisar isolar algo maior,
+  nascem a partir de `dev` e voltam pra `dev` via merge — nunca direto
+  pra `master`.
+
 ## Convenção de trabalho com IA
 
 * Implementar uma funcionalidade por vez, de ponta a ponta, antes de

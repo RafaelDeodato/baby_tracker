@@ -58,8 +58,10 @@ prevista em `docs/baby-tracker-mvp.md` define o local correto.
 
 ## Comandos
 
+### Desenvolvimento local
+
 ```bash
-# subir ambiente local
+# subir banco (Postgres + pgAdmin) local
 docker-compose up -d
 
 # rodar migrations
@@ -71,3 +73,23 @@ alembic revision --autogenerate -m "descrição"
 # rodar a API localmente
 python run.py
 ```
+
+### Produção (Docker + gunicorn)
+
+`python run.py` é só pro dev local — em produção a API roda via
+`gunicorn` dentro do `Dockerfile` na raiz de `backend/`. Alvo é o Cloud
+Run: a porta vem da variável de ambiente `PORT` (padrão `8080` se não
+definida).
+
+```bash
+# build da imagem
+docker build -t baby-tracker-backend .
+
+# rodar localmente pra testar a imagem de produção (variáveis de
+# ambiente reais entram via -e ou --env-file, nunca hardcoded na imagem)
+docker run -p 8080:8080 --env-file .env baby-tracker-backend
+```
+
+Migrations não rodam automaticamente no `CMD` da imagem — seguem sendo
+um passo manual (`alembic upgrade head`) antes ou depois do deploy,
+igual já é hoje em dev.
