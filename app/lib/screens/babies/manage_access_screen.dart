@@ -50,26 +50,31 @@ class _ManageAccessScreenState extends State<ManageAccessScreen> {
     }
   }
 
-  Future<void> _invite() {
-    return showInviteDialog(
+  Future<void> _invite() async {
+    String? invitedUsername;
+    await showInviteDialog(
       context,
       onSubmit: (username, role, title) async {
         final result = await ApiService.createInvite(widget.babyId, username, role, title: title);
         if (result['status'] == 201) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Convite enviado pra @$username!')),
-            );
-          }
+          invitedUsername = username;
           return null;
         }
         return result['data']['message'] ?? 'Não foi possível enviar o convite.';
       },
     );
+    // Aguarda o dialog fechar (e a animação de saída assentar) antes de
+    // mexer no estado da tela — mexer no meio da transição de fechamento
+    // derruba o TextField do dialog com "controller usado após dispose".
+    if (invitedUsername != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Convite enviado pra @$invitedUsername!')),
+      );
+    }
   }
 
-  Future<void> _editAccess(Map<String, dynamic> user) {
-    return showEditAccessDialog(
+  Future<void> _editAccess(Map<String, dynamic> user) async {
+    await showEditAccessDialog(
       context,
       name: user['name'],
       username: user['username'],
@@ -78,12 +83,12 @@ class _ManageAccessScreenState extends State<ManageAccessScreen> {
       onSubmit: (role, title) async {
         final result = await ApiService.updateBabyUser(widget.babyId, user['user_id'], role: role, title: title);
         if (result['status'] == 200) {
-          await _fetchUsers();
           return null;
         }
         return result['data']['message'] ?? 'Não foi possível salvar.';
       },
     );
+    _fetchUsers();
   }
 
   Future<void> _confirmRemove(Map<String, dynamic> user) async {
